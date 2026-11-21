@@ -63,7 +63,7 @@ struct SettingsView: View {
                         }
                     }
 
-                    TextField("https://your-worker.workers.dev", text: $proxyURLInput)
+                    TextField("代理地址", text: $proxyURLInput)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.URL)

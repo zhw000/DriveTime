@@ -199,21 +199,22 @@ struct RootView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 9, style: .continuous)
                 .fill(DriveTimeTheme.ink)
-                .frame(width: 30, height: 30)
             Path { path in
-                path.move(to: CGPoint(x: 10, y: 23))
+                path.move(to: CGPoint(x: 8, y: 23))
                 path.addCurve(
-                    to: CGPoint(x: 21, y: 8),
-                    control1: CGPoint(x: 8, y: 14),
-                    control2: CGPoint(x: 22, y: 17)
+                    to: CGPoint(x: 22, y: 8),
+                    control1: CGPoint(x: 6.5, y: 14),
+                    control2: CGPoint(x: 22.5, y: 17)
                 )
             }
             .stroke(DriveTimeTheme.surface, style: StrokeStyle(lineWidth: 2.6, lineCap: .round))
             Circle()
                 .fill(DriveTimeTheme.accent)
                 .frame(width: 7, height: 7)
-                .offset(x: 6, y: -7)
+                .offset(x: 6.5, y: -7)
         }
+        .frame(width: 30, height: 30)
+        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
         .accessibilityHidden(true)
     }
 

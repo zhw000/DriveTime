@@ -29,6 +29,7 @@ final class DriveTimeUITests: XCTestCase {
             element("placeSearchField").waitForExistence(timeout: 5),
             "Tapping the origin field should open place search"
         )
+        dismissKeyboardTutorialIfNeeded()
         addScreenshot(named: "02-place-search")
 
         let cancel = app.buttons["取消"].firstMatch
@@ -100,6 +101,13 @@ final class DriveTimeUITests: XCTestCase {
 
     private func element(_ identifier: String) -> XCUIElement {
         app.descendants(matching: .any)[identifier]
+    }
+
+    private func dismissKeyboardTutorialIfNeeded() {
+        let continueButton = app.buttons["Continue"].firstMatch
+        if continueButton.waitForExistence(timeout: 1.5) {
+            continueButton.tap()
+        }
     }
 
     private func addScreenshot(named name: String) {

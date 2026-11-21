@@ -49,7 +49,9 @@ final class CoordinateTransformTests: XCTestCase {
         let gcj = wgs.converted(to: .gcj02)
         XCTAssertLessThan(wgs.groundDistance(to: gcj), 0.5)
 
-        let other = TestSupport.location("附近", latitude: 28.5801, longitude: 121.3601)
-        XCTAssertLessThan(other.coordinate.groundDistance(to: wgs), 40)
+        let nearbyWGS = GeoCoordinate(latitude: 28.5801, longitude: 121.3601, datum: .wgs84)
+        XCTAssertLessThan(nearbyWGS.groundDistance(to: wgs), 40)
+        let nearbyGCJ = nearbyWGS.converted(to: .gcj02)
+        XCTAssertLessThan(nearbyGCJ.groundDistance(to: wgs), 40)
     }
 }

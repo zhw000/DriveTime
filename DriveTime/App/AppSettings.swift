@@ -60,7 +60,7 @@ final class AppSettings {
         let storedUnit = defaults.string(forKey: Key.distanceUnit)
         self.distanceUnit = DistanceUnit(rawValue: storedUnit ?? "") ?? .metric
         let storedTime = defaults.string(forKey: Key.timeFormat)
-        self.timeFormat = TimeFormatPreference(rawValue: storedTime ?? "") ?? .system
+        self.timeFormat = TimeFormatPreference(rawValue: storedTime ?? "") ?? .twentyFourHour
         self.showTrafficLayer = defaults.object(forKey: Key.trafficLayer) as? Bool ?? false
 
         let storedProxy = defaults.string(forKey: Key.proxyBaseURL)

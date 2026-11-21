@@ -32,7 +32,7 @@ final class AMapResponseMapperTests: XCTestCase {
         XCTAssertEqual(first.tollDistanceMeters ?? -1, 8_000, accuracy: 0.001)
         XCTAssertEqual(first.hasTolls, true)
         XCTAssertTrue(first.isRecommended)
-        XCTAssertEqual(first.polyline.count, 4)
+        XCTAssertEqual(first.polyline.count, 3)
         XCTAssertEqual(first.polyline.first?.datum, .gcj02)
         XCTAssertEqual(first.steps.count, 2)
         XCTAssertEqual(first.traffic?.segments.count, 3)

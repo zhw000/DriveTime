@@ -5,8 +5,18 @@ import XCTest
 
 @MainActor
 final class HistoryStoreTests: XCTestCase {
+    /// SwiftData contexts do not retain their container. Keep every in-memory
+    /// container alive for the duration of the test case.
+    private var containers: [ModelContainer] = []
+
+    private func makeHistory() throws -> HistoryStore {
+        let (history, container) = try TestSupport.makeHistoryStore()
+        containers.append(container)
+        return history
+    }
+
     func testRecordAndFetchHistorySummary() throws {
-        let (history, _) = try TestSupport.makeHistoryStore()
+        let history = try makeHistory()
         let queriedAt = TestSupport.makeDate(
             DateComponents(year: 2026, month: 5, day: 20, hour: 14, minute: 30)
         )
@@ -26,7 +36,7 @@ final class HistoryStoreTests: XCTestCase {
     }
 
     func testFavoriteAndDeleteRoute() throws {
-        let (history, _) = try TestSupport.makeHistoryStore()
+        let history = try makeHistory()
         let saved = history.record(plan: TestSupport.plan())
         XCTAssertEqual(history.favoriteRoutes.count, 0)
 
@@ -40,7 +50,7 @@ final class HistoryStoreTests: XCTestCase {
     }
 
     func testClearHistoryKeepsFavorites() throws {
-        let (history, _) = try TestSupport.makeHistoryStore()
+        let history = try makeHistory()
         let favorite = history.record(plan: TestSupport.plan(origin: TestSupport.location("家", latitude: 28.58, longitude: 121.36)))
         history.toggleFavorite(route: favorite)
         _ = history.record(plan: TestSupport.plan(origin: TestSupport.location("公司", latitude: 29.0, longitude: 121.0)))
@@ -53,7 +63,7 @@ final class HistoryStoreTests: XCTestCase {
     }
 
     func testFavoritePlaceToggleAndLookup() throws {
-        let (history, _) = try TestSupport.makeHistoryStore()
+        let history = try makeHistory()
         let location = TestSupport.location("西湖", latitude: 30.25, longitude: 120.13)
         XCTAssertFalse(history.isFavoritePlace(location))
 
@@ -68,7 +78,7 @@ final class HistoryStoreTests: XCTestCase {
     }
 
     func testDuplicateFavoriteMatchingUsesCoordinates() throws {
-        let (history, _) = try TestSupport.makeHistoryStore()
+        let history = try makeHistory()
         let original = TestSupport.location("西湖", latitude: 30.25, longitude: 120.13)
         history.toggleFavoritePlace(original)
         let nearby = TestSupport.location("西湖", latitude: 30.2501, longitude: 120.1301)
@@ -78,7 +88,7 @@ final class HistoryStoreTests: XCTestCase {
     }
 
     func testRecordPreservesFavoriteOnMatchingRoute() throws {
-        let (history, _) = try TestSupport.makeHistoryStore()
+        let history = try makeHistory()
         let plan = TestSupport.plan()
         let first = history.record(plan: plan)
         history.toggleFavorite(route: first)
