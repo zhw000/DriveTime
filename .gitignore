@@ -1,0 +1,28 @@
+# Build products
+build/
+DerivedData/
+*.xcresult
+TestResults.xcresult
+test.log
+build.log
+test-summary.json
+artifacts/
+*.ipa
+*.dSYM.zip
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+
+# Tooling
+.tools/
+__pycache__/
+*.pyc
+node_modules/
+.wrangler/
+.dev.vars
+
+# macOS
+.DS_Store

@@ -1,0 +1,92 @@
+name: iOS Simulator Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-simulator-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  XCODE_VERSION: "26.6"
+  XCODEGEN_VERSION: "2.48.0"
+
+jobs:
+  simulator-tests:
+    name: Simulator build & XCTest
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Select and report toolchain
+        run: |
+          set -euo pipefail
+          sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
+          sw_vers
+          xcodebuild -version
+          xcrun simctl list runtimes
+          swift --version
+
+      - name: Install XcodeGen (pinned)
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip" \
+            -o /tmp/xcodegen.zip
+          unzip -q /tmp/xcodegen.zip -d /tmp/xcodegen
+          sudo PREFIX=/usr/local /tmp/xcodegen/xcodegen/install.sh
+          xcodegen --version
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml
+
+      - name: Discover an installed iPhone simulator
+        id: simulator
+        run: |
+          set -euo pipefail
+          UDID="$(python3 scripts/pick-simulator.py)"
+          [[ -n "$UDID" ]] || { echo "No simulator UDID discovered" >&2; exit 1; }
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID" 2>/dev/null || true
+
+      - name: Build and run XCTest on simulator
+        run: |
+          set -euo pipefail
+          rm -rf TestResults.xcresult
+          xcodebuild \
+            -project DriveTime.xcodeproj \
+            -scheme DriveTime \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -resultBundlePath TestResults.xcresult \
+            test 2>&1 | tee test.log
+
+      - name: Summarize XCTest results
+        if: always()
+        run: |
+          if [ -d TestResults.xcresult ]; then
+            xcrun xcresulttool get test-results summary \
+              --path TestResults.xcresult 2>/dev/null | tee test-summary.json || true
+          fi
+
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: DriveTime-simulator-tests-${{ github.run_number }}
+          path: |
+            TestResults.xcresult
+            test.log
+            test-summary.json
+            DriveTime.xcodeproj
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,0 +1,99 @@
+name: iOS Device Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-device-build-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  XCODE_VERSION: "26.6"
+  XCODEGEN_VERSION: "2.48.0"
+
+jobs:
+  unsigned-device-ipa:
+    name: Unsigned iPhoneOS build & IPA
+    runs-on: macos-26
+    timeout-minutes: 35
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Select and report toolchain
+        run: |
+          set -euo pipefail
+          sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
+          sw_vers
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          xcrun --sdk iphonesimulator --show-sdk-version
+          swift --version
+          uname -m
+
+      - name: Install XcodeGen (pinned)
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip" \
+            -o /tmp/xcodegen.zip
+          unzip -q /tmp/xcodegen.zip -d /tmp/xcodegen
+          sudo PREFIX=/usr/local /tmp/xcodegen/xcodegen/install.sh
+          xcodegen --version
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml
+
+      - name: Build for iPhoneOS without code signing
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          xcodebuild \
+            -project DriveTime.xcodeproj \
+            -scheme DriveTime \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            build 2>&1 | tee build.log
+
+      - name: Package unsigned IPA
+        run: |
+          set -euo pipefail
+          chmod +x scripts/*.sh
+          scripts/package-unsigned-ipa.sh \
+            build/Build/Products/Release-iphoneos/DriveTime.app \
+            artifacts
+
+      - name: Show artifact metadata
+        run: |
+          set -euo pipefail
+          ls -lh artifacts
+          cat artifacts/checksums.txt
+
+      - name: Upload unsigned IPA and build evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: DriveTime-device-${{ github.run_number }}
+          path: |
+            artifacts/DriveTime-unsigned.ipa
+            artifacts/checksums.txt
+            build.log
+            DriveTime.xcodeproj
+            build/Build/Products/Release-iphoneos/DriveTime.app
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,0 +1,153 @@
+name: Release Unsigned IPA
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release (for example v0.1.0)"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ios-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  XCODE_VERSION: "26.6"
+  XCODEGEN_VERSION: "2.48.0"
+
+jobs:
+  release:
+    name: Build, verify and publish unsigned IPA
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve release tag
+        id: release
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [ -n "${INPUT_TAG:-}" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "Tag must look like v0.1.0 (got '$TAG')" >&2
+            exit 1
+          }
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Select and report toolchain
+        run: |
+          set -euo pipefail
+          sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
+          sw_vers
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          swift --version
+
+      - name: Install XcodeGen (pinned)
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip" \
+            -o /tmp/xcodegen.zip
+          unzip -q /tmp/xcodegen.zip -d /tmp/xcodegen
+          sudo PREFIX=/usr/local /tmp/xcodegen/xcodegen/install.sh
+          xcodegen --version
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml
+
+      - name: Build Release for iPhoneOS without code signing
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          xcodebuild \
+            -project DriveTime.xcodeproj \
+            -scheme DriveTime \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            MARKETING_VERSION="${{ steps.release.outputs.version }}" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            build 2>&1 | tee build.log
+
+      - name: Package and verify unsigned IPA
+        run: |
+          set -euo pipefail
+          chmod +x scripts/*.sh
+          scripts/package-unsigned-ipa.sh \
+            build/Build/Products/Release-iphoneos/DriveTime.app \
+            artifacts
+
+      - name: Upload build evidence to workflow
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: DriveTime-release-${{ github.run_number }}
+          path: |
+            artifacts/DriveTime-unsigned.ipa
+            artifacts/checksums.txt
+            build.log
+            DriveTime.xcodeproj
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          cat > release-notes.md <<EOF
+          ## DriveTime ${TAG}
+
+          **Unsigned IPA — Requires User Signing.**
+
+          This is a genuine iPhoneOS Release build packaged as an unsigned IPA. It cannot be installed
+          as-is. Sign it with a valid Apple development certificate, a provisioning profile that
+          authorises your devices, and a matching bundle identifier before installation.
+
+          - Bundle identifier placeholder: \`com.example.drivetime\` (change before signing)
+          - Minimum iOS: 17.0
+          - Build toolchain: Xcode ${XCODE_VERSION}, macOS 26
+          - SHA-256: see \`checksums.txt\`
+          - Apple MapKit works out of the box. AMap requires a Cloudflare Worker proxy configured with
+            your AMap Web Service key and a proxy URL entered in DriveTime Settings.
+
+          See the repository README for signing, Bundle ID and AMap proxy instructions.
+          EOF
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" \
+              artifacts/DriveTime-unsigned.ipa \
+              artifacts/checksums.txt \
+              --clobber
+          else
+            gh release create "$TAG" \
+              artifacts/DriveTime-unsigned.ipa \
+              artifacts/checksums.txt \
+              --title "DriveTime ${TAG}" \
+              --notes-file release-notes.md \
+              --prerelease
+          fi
