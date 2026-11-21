@@ -9,10 +9,9 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: ios-simulator-tests-${{ github.ref }}
-  cancel-in-progress: true
-
+# Do not use a shared cancel-in-progress group here. A stuck simulator runner
+# must not prevent a later commit from being tested; each run has its own job
+# timeout and shell-level test timeouts.
 env:
   XCODE_VERSION: "26.6"
   XCODEGEN_VERSION: "2.48.0"
@@ -52,6 +51,7 @@ jobs:
 
       - name: Discover and boot an installed iPhone simulator
         id: simulator
+        timeout-minutes: 10
         run: |
           set -euo pipefail
           UDID="$(python3 scripts/pick-simulator.py)"
@@ -61,6 +61,7 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
 
       - name: Build app and test bundles for simulator
+        timeout-minutes: 15
         run: |
           set -o pipefail
           xcodebuild \
