@@ -30,3 +30,6 @@ node_modules/
 # Local CI logs
 ci-*.log
 
+# Local delivery folder (the IPA is distributed through GitHub Releases)
+deliverables/
+

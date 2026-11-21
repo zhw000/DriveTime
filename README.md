@@ -4,17 +4,19 @@ DriveTime 是一款原生 iOS 驾车耗时与到达时间查询工具。它不�
 
 - **原生 SwiftUI**，最低 iOS 17，无 WebView、无 Flutter/React Native、无网页套壳。
 - 路线、距离、预计耗时、过路费和路况都来自真实地图服务：**Apple MapKit** 与 **高德地图 Web 服务（经 Cloudflare Worker 代理）**。
+- **Siri / App Intents**：说“用 DriveTime 查询驾车时间”，Siri 询问起点和终点后朗读真实车程，并显示路线摘要卡片。
 - 不使用直线距离 ÷ 固定速度伪造 ETA。
 - 通过 GitHub Actions 在云端编译真正面向 **iPhoneOS** 的 `.app`，打包为 **未签名 IPA**。
 - 默认 Bundle ID 为 `com.example.drivetime`，可在重签名前替换。
 
-> **验证状态（2026-11-21）**：提交 `4760b60` 已通过云端 CI。
+> **验证状态（2026-11-21，v0.2.0 + Siri）**：提交 `c186ac7` 已通过云端 CI。
 >
-> - **iOS Device Build**：成功，生成真实 **iPhoneOS arm64** 未签名 IPA；SHA-256 `b195718ff59464a97b11b6be4458b0e9ae81c0de0c2b5152756e24ea583cabe4`。
-> - **iOS Simulator Tests**：单元测试 **54 通过 / 0 失败 / 1 跳过**；UI 测试 **4/4 通过**。
+> - **iOS Device Build**：成功，生成真实 **iPhoneOS arm64** 未签名 IPA；SHA-256 `b47740c312ae56e0b2fccf9f6739098e2f06b9c7d0f42f17b3a37478a5a0104a`，1,268,601 bytes。
+> - **iOS Simulator Tests**：单元测试 **63 通过 / 0 失败 / 1 跳过**；UI 测试 **4/4 通过**。
+> - **Siri 构建证据**：构建日志确认生成 `Metadata.appintents`，App Shortcut 短语以 **zh-Hans** 训练；语音唤起本身未在 CI 验证。
 > - 环境：macOS 26、Xcode 26.6、iPhone 17 Pro Simulator（iOS 26.5）。
 > - 跳过的是真实 Apple MapKit 在线路线测试（Simulator 返回 `serverUnavailable`）；高德尚未使用真实 Key 联调。
-> - **尚未在真实 iPhone 上安装验证**；签名后的安装受证书、Profile、Bundle ID 和设备影响。
+> - **尚未在真实 iPhone 上安装验证 Siri 或其他功能**；签名后的安装受证书、Profile、Bundle ID 和设备影响。
 >
 > 详细运行链接、产物校验与测试证据见 [`Docs/Verification.md`](Docs/Verification.md)。
 
@@ -24,20 +26,21 @@ DriveTime 是一款原生 iOS 驾车耗时与到达时间查询工具。它不�
 
 1. [功能](#功能)
 2. [真实数据原则与限制](#真实数据原则与限制)
-3. [截图与界面](#截图与界面)
-4. [工程结构](#工程结构)
-5. [本地环境要求](#本地环境要求)
-6. [生成 Xcode 工程](#生成-xcode-工程)
-7. [GitHub Actions 构建](#github-actions-构建)
-8. [下载未签名 IPA 并自行签名](#下载未签名-ipa-并自行签名)
-9. [Bundle ID 与重签名](#bundle-id-与重签名)
-10. [高德地图配置](#高德地图配置)
-11. [坐标系](#坐标系)
-12. [测试](#测试)
-13. [验证状态与已知限制](#验证状态与已知限制)
-14. [常见构建问题](#常见构建问题)
-15. [真机验收清单](#真机验收清单)
-16. [数据来源与隐私](#数据来源与隐私)
+3. [Siri 与快捷指令](#siri-与快捷指令)
+4. [截图与界面](#截图与界面)
+5. [工程结构](#工程结构)
+6. [本地环境要求](#本地环境要求)
+7. [生成 Xcode 工程](#生成-xcode-工程)
+8. [GitHub Actions 构建](#github-actions-构建)
+9. [下载未签名 IPA 并自行签名](#下载未签名-ipa-并自行签名)
+10. [Bundle ID 与重签名](#bundle-id-与重签名)
+11. [高德地图配置](#高德地图配置)
+12. [坐标系](#坐标系)
+13. [测试](#测试)
+14. [验证状态与已知限制](#验证状态与已知限制)
+15. [常见构建问题](#常见构建问题)
+16. [真机验收清单](#真机验收清单)
+17. [数据来源与隐私](#数据来源与隐私)
 
 ---
 
@@ -70,6 +73,11 @@ DriveTime 是一款原生 iOS 驾车耗时与到达时间查询工具。它不�
 - **计划出发时间**
   - 现在、稍后一小时、明天早上、自定义日期时间。
   - 当前接口不支持可信的未来交通预测时，界面明确标注“未来时刻推算”，不冒充预测。
+- **Siri / App Intents**
+  - 说“用 DriveTime 查询驾车时间”“让 DriveTime 计算车程”或“问 DriveTime 这段路要开多久”。
+  - Siri 会依次询问起点和终点，后端使用与 App 相同的真实路线服务，朗读预计车程、到达时间和距离，并显示 Siri 摘要卡片。
+  - 同一个 Intent 也会自动出现在“快捷指令”App 的 DriveTime 分类，支持手动填写起点/终点或在自动化中调用。
+  - 无独立 Intents Extension；App Shortcuts 元数据以中文（zh-Hans）构建。更详细的限制见 [Siri 与快捷指令](#siri-与快捷指令)。
 - **UI / 无障碍**
   - 原生 `Map`、原生 Sheet `presentationDetents`、Dynamic Type、深色模式、Reduce Motion 处理、VoiceOver 标签、安全区与横屏布局。
   - 默认浅色，自动适配深色。
@@ -82,6 +90,7 @@ DriveTime 是一款原生 iOS 驾车耗时与到达时间查询工具。它不�
 ### 不在本版本范围
 
 - 逐向语音导航、后台持续定位、导航中剩余里程动态更新。
+- 完整 SiriKit 领域集成（来电、消息等）；本项目只使用 App Intents/App Shortcuts。
 - 高德 iOS SDK 的离线地图或导航能力（本项目用 Web 服务 + MapKit 渲染）。
 - 账号同步、广告、订阅。
 - 真实未来时刻交通预测（当前接入的接口不提供）。
@@ -111,6 +120,56 @@ DriveTime 是一款原生 iOS 驾车耗时与到达时间查询工具。它不�
 - Worker、请求参数、AMap JSON 解析、错误码和字段缺失均有自动化测试。
 - **仓库不包含高德 Key，因此没有用真实高德账号完成在线路线查询。** 配置有效 Key 后的结果需要你按本文验证。
 - Apple MapKit 不依赖仓库密钥，真机网络可用时可直接查询。
+
+---
+
+## Siri 与快捷指令
+
+DriveTime 已接入 **App Intents + App Shortcuts**。安装后可以直接用 Siri 查询两个地点之间的真实驾车时间，不需要先打开 App、也不需要手动启动导航。
+
+### 可以怎么说
+
+- 嘿 Siri，**用 DriveTime 查询驾车时间**
+- 嘿 Siri，**让 DriveTime 计算车程**
+- 嘿 Siri，**问 DriveTime 这段路要开多久**
+
+Siri 会依次询问：
+
+1. **从哪里出发？** → 说出起点
+2. **要去哪里？** → 说出终点
+
+然后 DriveTime 会调用当前配置的真实地图服务，Siri 朗读例如：
+
+> 从台州市路桥区到杭州市西湖区，预计 2 小时 36 分钟，今天 16:45 到达，全程 219 公里。
+
+同时显示一张 Siri 摘要卡片，包含预计车程、抵达时间、距离、路线来源和必要的回退/错误提示。
+
+同一个 Intent 也会自动出现在“快捷指令”App 的 DriveTime 分类下，名称为“查询车程”，可手动填写起点和终点，也可以作为快捷指令自动化的一个动作。
+
+### 实现方式与边界
+
+- 使用 `AppIntent` + `AppShortcutsProvider`，**没有单独的 Intents Extension**。
+- `SiriRouteQueryService` 复用 App 的偏好设置、ProviderResolver、Apple/高德真实服务、中文错误文案和自动回退逻辑；Siri 不会返回模拟路线。
+- 地点搜索由 Apple MapKit 完成；路线仍遵循当前“自动 / Apple / 高德”服务选择。
+- App Shortcut 短语约束下使用无动态参数的短语，Siri 通过参数提问收集起点/终点。
+- App 的开发语言/App Shortcut 元数据为 **zh-Hans**；构建日志中实际看到 `Training ... for zh-Hans`，IPA 内包含 `Metadata.appintents`。
+- 已添加 `NSSiriUsageDescription`。本工程只使用 App Shortcuts，不包含 Intents Extension，也没有添加额外的 Siri entitlement；普通重签流程不变。如果你以后扩展为完整 SiriKit 领域（如消息/通话），需要另行启用 Siri capability 并让 Provisioning Profile 支持对应 entitlement。
+- **Bundle ID 警告**：Siri 的 App Intents 元数据在构建时写入 Bundle ID。若签名工具只修改 Info.plist 的 Bundle ID 而不重新构建，Siri 可能无法发现快捷指令。最可靠的方式是先在 `project.yml` 中修改 Bundle ID，再让 CI 重新构建并签名；或使用默认/匹配原始元数据的 Bundle ID。
+- 必须满足：设备已启用 Siri、Siri 使用中文（普通话）、App 已安装并至少启动一次、系统“Siri 与搜索 → DriveTime”已启用。
+- 如果 Siri 找不到快捷指令，打开“快捷指令”App，确认“查询车程”已出现在 DriveTime 分类，并直接用该快捷指令测试；也可将快捷指令加入 Siri。
+- **真实 Siri 语音唤起尚未在 CI 或真机上验证**；CI 只验证了代码编译、App Intents 元数据生成和 zh-Hans NLU 短语训练。
+
+### Siri 查询的数据流
+
+```
+Siri → DriveTimeRouteIntent → SiriRouteQueryService
+                              ├─ Apple MKLocalSearch 解析起点/终点
+                              ├─ 当前设置选择 Apple MapKit 或高德 Provider
+                              ├─ 真实路线请求；自动模式可显式回退 Apple
+                              └─ 朗读车程 + 显示摘要卡片
+```
+
+Siri 查询不写入历史记录（避免后台语音查询频繁污染历史）；如需完整路线、路况和备选方案，请打开 App 查看。
 
 ---
 
@@ -179,6 +238,7 @@ DriveTime/
     RootView.swift
   ViewModels/              # RoutePlannerViewModel、PlaceSearchViewModel
   Routing/                 # RoutingProvider、Apple/AMap、解析器、Resolver
+  Siri/                    # AppIntent、AppShortcutsProvider、无头查询服务
   Services/                # HTTP、定位、限频
   Persistence/             # SwiftData 模型、HistoryStore、Keychain
   Location/                # WGS-84 / GCJ-02
@@ -229,6 +289,8 @@ open DriveTime.xcodeproj
 新增代码放在 `DriveTime/` 下会被自动包含（`Resources/Info.plist` 例外，由 build setting 引用）。不要只在 Xcode 中手工添加文件而不同步 `project.yml`，CI 重新生成时会丢失。
 
 Bundle ID 只在 `project.yml` 的 `PRODUCT_BUNDLE_IDENTIFIER` 集中维护，不硬编码进业务源码。
+
+**改 Bundle ID 的特殊注意事项：** App Intents/Siri 元数据在构建时绑定 Bundle ID。若你只让签名工具改 Info.plist 的 Bundle ID，但没有重新构建，Siri 可能找不到 DriveTime 快捷指令。推荐流程是修改 `project.yml` 的 Bundle ID → CI 重新构建 → 用与构建元数据一致的新 Bundle ID 签名。详见 [Siri 与快捷指令](#siri-与快捷指令)。
 
 ---
 
@@ -317,11 +379,11 @@ scripts/package-unsigned-ipa.sh \
 ### 发布
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.2.0
+git push origin v0.2.0
 ```
 
-Release 为 prerelease，标题 `DriveTime v0.1.0`，正文明确 **Unsigned IPA — Requires User Signing**。不是可直接安装的正式版本。
+Release 为 prerelease，标题 `DriveTime v0.2.0`，正文明确 **Unsigned IPA — Requires User Signing**。不是可直接安装的正式版本。
 
 ---
 
@@ -330,8 +392,8 @@ Release 为 prerelease，标题 `DriveTime v0.1.0`，正文明确 **Unsigned IPA
 > 未签名 IPA 不能直接安装。你需要 Apple 开发证书、匹配的 Provisioning Profile 和设备授权。
 
 1. 从 Actions Artifact 或 Release 下载 `DriveTime-unsigned.ipa`。
-2. 校验 SHA-256：`shasum -a 256 DriveTime-unsigned.ipa`，与 `checksums.txt` 对照。本文验证的提交 `4760b60` 的 Device Build IPA 为：
-   `b195718ff59464a97b11b6be4458b0e9ae81c0de0c2b5152756e24ea583cabe4`（1,221,445 bytes）。GitHub Release 会重新构建，最终以 Release 附带的 `checksums.txt` 为准。
+2. 校验 SHA-256：`shasum -a 256 DriveTime-unsigned.ipa`，与 `checksums.txt` 对照。本文 v0.2.0 的 Device Build IPA 为：
+   `b47740c312ae56e0b2fccf9f6739098e2f06b9c7d0f42f17b3a37478a5a0104a`（1,268,601 bytes）。GitHub Release 会重新构建，最终以 Release 附带的 `checksums.txt` 为准。
 3. 用 Sideloadly、AltStore、ESign、TrollStore 或自己的 `codesign` 流程签名。
 4. 安装到设备。
 
@@ -386,6 +448,8 @@ com.example.drivetime.uitests
 2. 在 Apple Developer 后台注册 App ID，创建对应 Provisioning Profile。
 3. 推送代码重新 CI 构建。
 4. 签名时确保 profile Bundle ID 完全匹配。
+
+**Siri 注意：** 请按上面的“先改 Bundle ID，再重新构建”流程操作。App Intents 元数据中的 Bundle ID 是构建时写入的；仅在重签名工具里修改 Info.plist 可能导致 Siri 无法识别 DriveTime。
 
 工程使用空 Team、无固定开发者账号；CI 无签名构建不需要证书。App 版本通过 `Info.plist` 的 `$(MARKETING_VERSION)` / `$(CURRENT_PROJECT_VERSION)` 注入。
 
@@ -483,11 +547,13 @@ DRIVETIME_PROXY_BASE_URL="https://your-worker.workers.dev"
 
 ## 测试
 
-已验证结果（提交 `4760b60`，运行 [Simulator Tests #19](https://github.com/zhw000/DriveTime/actions/runs/44882877674)）：
+已验证结果（提交 `c186ac7`，运行 [Simulator Tests #21](https://github.com/zhw000/DriveTime/actions/runs/44895248663)）：
 
-- 单元测试：**54 passed / 0 failed / 1 skipped**
+- 单元测试：**63 passed / 0 failed / 1 skipped**
 - UI 测试：**4 passed / 0 failed**
+- App Intents 构建：生成 `Metadata.appintents`，短语以 **zh-Hans** 训练
 - 唯一跳过项：`AppleMapLiveIntegrationTests` 尝试真实 `MKDirections` 请求，Simulator 返回 `serverUnavailable`；因此如实标记为未验证，而不是伪造通过。
+- Siri 真实语音唤起无法在 CI 中自动验证，见下方限制。
 
 ### 单元测试
 
@@ -514,6 +580,7 @@ DRIVETIME_PROXY_BASE_URL="https://your-worker.workers.dev"
 - SwiftData 历史/收藏/删除/清空保留收藏
 - Keychain 内存 mock
 - WGS-84 ↔ GCJ-02 往返与海外/香港不偏移
+- Siri 无头查询服务：成功结果、不可用地点、相同地点、搜索失败、高德缺配置、策略回退、Apple 自动回退提示、Siri 错误文案
 
 ### UI 测试
 
@@ -522,7 +589,7 @@ DRIVETIME_PROXY_BASE_URL="https://your-worker.workers.dev"
 - 首页、地点搜索入口
 - 演示路线结果、明确“演示数据”标记
 - 结果 Sheet 展开、备选路线、刷新按钮
-- 设置页及代理字段
+- 设置页、Siri 与快捷指令说明、代理字段
 - 深色模式首页
 - 截图附件自动上传
 
@@ -545,6 +612,7 @@ CI 自动选择已安装的 iPhone Simulator，不硬编码不存在的设备。
 ### 当前测试限制
 
 - UI 测试仅覆盖模拟器冒烟路径；未对真机尺寸、Dynamic Island 机型、系统弹窗逐项验收。
+- **Siri 只验证了编译、App Intents 元数据和 zh-Hans 短语训练；没有在真实设备上验证语音识别、参数追问和朗读结果。**
 - 未使用真实高德 Key 做在线集成测试。
 - 未在真机验证定位权限、运营商网络和真实交通。
 - 未做完整 VoiceOver 手动走查、超大字号矩阵或所有横屏尺寸。
@@ -560,7 +628,8 @@ CI 自动选择已安装的 iPhone Simulator，不硬编码不存在的设备。
 - GitHub Actions 在 `macos-26` + Xcode 26.6 上完成 Release iPhoneOS 无签名构建。
 - `package-unsigned-ipa.sh` / `verify-ipa.sh` 在 CI 实际运行并通过，确认 IPA 内是 iPhoneOS、arm64、非 Simulator。
 - Apple MapKit 和高德 Provider 实现完整；Apple 不需要 Key；高德需要你的 Worker。
-- **提交 `4760b60` 的实际 CI 结果**：iPhoneOS 设备构建成功；未签名 IPA 结构校验通过；单元测试 54 通过、1 个真实 MapKit 在线测试跳过；UI 测试 4/4 通过。
+- **提交 `c186ac7` 的实际 CI 结果**：iPhoneOS 设备构建成功；未签名 IPA 结构校验通过；单元测试 63 通过、1 个真实 MapKit 在线测试跳过；UI 测试 4/4 通过；App Intents 元数据生成并以 zh-Hans 训练。
+- Siri 接入 app 的定位/名称：App Shortcut“查询车程”位于 DriveTime 分类。
 - 完整 Xcode 工程已由 CI 生成并提交到 `DriveTime.xcodeproj`。
 - Windows 无法编译 iOS，所有编译结论来自 GitHub Actions。
 - 详细证据：[`Docs/Verification.md`](Docs/Verification.md)。
@@ -568,6 +637,7 @@ CI 自动选择已安装的 iPhone Simulator，不硬编码不存在的设备。
 ### 尚未验证 / 已知限制
 
 - **未用你的证书在真实 iPhone 安装验证。**
+- **未在真机上验证 Siri 语音唤起、参数追问、朗读和 Siri 卡片。**
 - **未使用真实高德 Key 在线查询。**
 - **真实 Apple MapKit 在线路线请求在 Simulator 中返回 `serverUnavailable`，因此该实时集成测试被跳过；未用真机补验。**
 - Apple MapKit 不返回逐路段交通状态；Apple 路线“路况”显示暂无逐段数据。可选底图路况图层不等于路线 TMC。
@@ -640,6 +710,16 @@ vtool -show-build Payload/DriveTime.app/DriveTime
 - 检查服务是否返回 polyline；高德缺轨迹时 UI 会提示，不画直线。
 - Apple 地图在中国大陆的可用性受系统区域设置影响。
 
+### Siri 找不到 DriveTime / 不能唤起
+
+- 先安装并**至少打开一次** App，让系统注册 App Intents。
+- 确认系统“设置 → Siri 与搜索 → DriveTime”为开启；“Siri 与搜索”中的“在 App 中显示”等开关也可检查。
+- 确认 Siri 语言为中文（普通话）；本版本 App Shortcut 元数据为 `zh-Hans`。
+- 打开“快捷指令”App，查看 DriveTime 分类是否有“查询车程”。如果有，直接运行该快捷指令；也可把它加入 Siri。
+- 若只在重签名时改了 Bundle ID，Siri 元数据仍绑定旧 ID。请修改 `project.yml` 的 Bundle ID 后重新构建，再使用匹配的 profile 签名。
+- 本工程没有单独的 Intents Extension；不需要为 App Shortcuts 额外注入 Siri entitlement。若你自行扩展 SiriKit 领域，则要另行启用 Siri capability 并让 profile 支持。
+- 语音识别、Siri 服务器和快捷指令索引均受系统状态影响；本工程没有在真机上验证这些环节。
+
 ### 为什么未来出发提示“推算”
 
 这是有意设计，避免把当前拥堵当作明天早高峰事实。当前接口没有经验证的未来预测参数。
@@ -669,7 +749,11 @@ vtool -show-build Payload/DriveTime.app/DriveTime
 17. **布局**：Dynamic Island 机型、横屏、键盘、大字号无遮挡。
 18. **离线**：友好网络错误，恢复后可重试。
 19. **VoiceOver**：关键按钮有标签，结果面板可导航。
-20. **隐私**：无登录；说明与实际行为一致。
+20. **Siri**：对 Siri 说“用 DriveTime 查询驾车时间”，Siri 应依次询问起点和终点；回答后朗读真实车程并显示摘要卡片。
+21. **Siri 错误路径**：关闭网络或把服务设为未配置的高德，确认 Siri 给出清晰错误/回退提示，而不是假数据。
+22. **快捷指令**：在“快捷指令”App 中运行“查询车程”并填写起点/终点，确认可独立于 Siri 使用。
+23. **Bundle ID**：若改过 Bundle ID，重新安装后再次验证 Siri 快捷指令可被发现。
+24. **隐私**：确认 Siri 查询只向当前地图服务发送必要的地点/路线请求。
 
 CI 编译通过不等于真机所有功能验证通过。
 
@@ -683,6 +767,7 @@ CI 编译通过不等于真机所有功能验证通过。
   - 无账号、无广告、无分析 SDK。
   - 位置仅用于当前起点，不保存轨迹，不做后台定位。
   - 查询发往所选服务（Apple 直接；高德经你的 Worker）。
+  - Siri 查询通过系统 App Intents 进入 App，使用同样的地图服务；DriveTime 不录制或保存语音。
   - 历史/收藏保存在设备本地 SwiftData。
   - 代理 URL 与 token 可随时清除；AMap Key 永不下发设备。
 
@@ -695,7 +780,8 @@ CI 编译通过不等于真机所有功能验证通过。
 - 分步路线预览、导航与动态路况刷新。
 - 国际化、iPad 多栏、无障碍大字号布局回归。
 - 真实高德测试账号的端到端集成测试（Key 不进入客户端）。
-- App Intents / 小组件显示常用路线 ETA。
+- 小组件/实时活动显示常用路线 ETA。
+- 将收藏路线暴露为 Siri AppEntity，支持“查一下回家路线”等更自然的一句话查询。
 
 ---
 

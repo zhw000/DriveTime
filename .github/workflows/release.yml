@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to release (for example v0.1.0)"
+        description: "Existing tag to release (for example v0.2.0)"
         required: true
 
 permissions:
@@ -46,7 +46,7 @@ jobs:
             TAG="${GITHUB_REF_NAME}"
           fi
           [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
-            echo "Tag must look like v0.1.0 (got '$TAG')" >&2
+            echo "Tag must look like v0.2.0 (got '$TAG')" >&2
             exit 1
           }
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
@@ -133,10 +133,14 @@ jobs:
           - Minimum iOS: 17.0
           - Build toolchain: Xcode ${XCODE_VERSION}, macOS 26
           - SHA-256: see \`checksums.txt\`
+          - Siri: App Intents / App Shortcuts are included. Say "用 DriveTime 查询驾车时间",
+            then answer the origin and destination prompts. Siri reads the real ETA and shows a snippet.
+          - App Shortcuts metadata is bound to the build-time Bundle ID. If you change the Bundle ID,
+            rebuild in CI instead of only editing Info.plist, or Siri may not discover the shortcut.
           - Apple MapKit works out of the box. AMap requires a Cloudflare Worker proxy configured with
             your AMap Web Service key and a proxy URL entered in DriveTime Settings.
 
-          See the repository README for signing, Bundle ID and AMap proxy instructions.
+          See the repository README for signing, Bundle ID, Siri and AMap proxy instructions.
           EOF
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" \

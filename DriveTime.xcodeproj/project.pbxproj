@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		029E26408CB19CBA9B136C81 /* FormattingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDEB58C7BECDBFADD5A6F071 /* FormattingTests.swift */; };
+		087F7D9F23493D81D62C5F76 /* SiriRouteQueryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D88F32027E39E7F882539FF /* SiriRouteQueryService.swift */; };
 		0A99D8F95CECCDF1CF63EC77 /* RoutingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F577FEFB17008D1FC2BBF1D /* RoutingProvider.swift */; };
 		0B3607C8A511DC64C13FD3F2 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 188AE49F1E90A9E00E991C64 /* HistoryView.swift */; };
 		100C2B4C80FEFB375AD6B0B9 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A679EE7267E92B1EC12E657 /* AppSettings.swift */; };
@@ -37,6 +38,7 @@
 		58E19001B47D1C1B2F0FEE68 /* GeoCoordinate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31BB490308565DCC717B9BCF /* GeoCoordinate.swift */; };
 		672FABD6CA56E4262E9AB0F6 /* HTTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF6761B6306993B307F00C4A /* HTTPClient.swift */; };
 		67EB103A1634CAAFB26314DF /* DriveTimeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 411273F797350352A707C063 /* DriveTimeUITests.swift */; };
+		70B758AED1895B5CB2C416FB /* DriveTimeAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 986CABC44753E2F58717C397 /* DriveTimeAppShortcuts.swift */; };
 		89C02AAA95DB4A1F109FD004 /* CoordinateTransformTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 134DC4B29682577235C32510 /* CoordinateTransformTests.swift */; };
 		8CB99FA652B4175F1626CF37 /* AMapRoutingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26425931B336AFDDB4C09FE1 /* AMapRoutingProvider.swift */; };
 		97D8E7B8A86499A8A0E2165B /* AppleMapItemMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D4791569832809C4D0AB7E /* AppleMapItemMapper.swift */; };
@@ -57,6 +59,8 @@
 		E0892E1566F55E8DDD1B3C88 /* AppleMapRoutingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F3E08DE9FFE09666D36E52D /* AppleMapRoutingProvider.swift */; };
 		E96C61937DB2F26CE02EFD1C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B254C9395D75CDD0F81FBF23 /* ContentView.swift */; };
 		F554BA1866C643DCBC61D644 /* AMapResponseMapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC582FD270B43561A5DD87B9 /* AMapResponseMapper.swift */; };
+		FB5180F74B34CF25F967EE61 /* DriveTimeRouteIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90DF5A14AA88B59FC9C01D27 /* DriveTimeRouteIntent.swift */; };
+		FF199461D412B12C87DA11FF /* SiriRouteQueryServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85901C52FD21E33B384F33F0 /* SiriRouteQueryServiceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -104,8 +108,12 @@
 		7B9A6AFB5F7ABC542BDB33B6 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		7F3E08DE9FFE09666D36E52D /* AppleMapRoutingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleMapRoutingProvider.swift; sourceTree = "<group>"; };
 		84EA7FDED1AFE05558CEBBB6 /* SavedModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedModels.swift; sourceTree = "<group>"; };
+		85901C52FD21E33B384F33F0 /* SiriRouteQueryServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriRouteQueryServiceTests.swift; sourceTree = "<group>"; };
 		8A82565549F2F44EDBADE8AE /* DriveTimeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveTimeApp.swift; sourceTree = "<group>"; };
 		8B0AA5C4B64AE7FF674B3BD1 /* RoutePlannerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePlannerViewModel.swift; sourceTree = "<group>"; };
+		8D88F32027E39E7F882539FF /* SiriRouteQueryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriRouteQueryService.swift; sourceTree = "<group>"; };
+		90DF5A14AA88B59FC9C01D27 /* DriveTimeRouteIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveTimeRouteIntent.swift; sourceTree = "<group>"; };
+		986CABC44753E2F58717C397 /* DriveTimeAppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveTimeAppShortcuts.swift; sourceTree = "<group>"; };
 		9A679EE7267E92B1EC12E657 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		A336F06665185B11D7216B8C /* TripSummarySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripSummarySheet.swift; sourceTree = "<group>"; };
 		A93BF5B1E27936CCBC55BC24 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
@@ -180,6 +188,16 @@
 			);
 			sourceTree = "<group>";
 		};
+		365C164A79149B245C03BB8C /* Siri */ = {
+			isa = PBXGroup;
+			children = (
+				986CABC44753E2F58717C397 /* DriveTimeAppShortcuts.swift */,
+				90DF5A14AA88B59FC9C01D27 /* DriveTimeRouteIntent.swift */,
+				8D88F32027E39E7F882539FF /* SiriRouteQueryService.swift */,
+			);
+			path = Siri;
+			sourceTree = "<group>";
+		};
 		566E8423BC13005DEE3B8223 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -243,6 +261,7 @@
 				ABDFB2CE482E9F609AB937B7 /* Resources */,
 				C21991F2755F6621BC3F64B7 /* Routing */,
 				AA101F3802F82C49D739937F /* Services */,
+				365C164A79149B245C03BB8C /* Siri */,
 				FE4425E9C1A969D1A5B2A0BB /* Utilities */,
 				0D27F35EA1285F3FD521979C /* ViewModels */,
 				566E8423BC13005DEE3B8223 /* Views */,
@@ -307,6 +326,7 @@
 				0DDE7BF34E1C649CD4A3CA40 /* MapViewportTests.swift */,
 				B8D350955FAA8113C987E15B /* ProviderModelTests.swift */,
 				FFAD5F6395256D484F952509 /* RoutePlannerViewModelTests.swift */,
+				85901C52FD21E33B384F33F0 /* SiriRouteQueryServiceTests.swift */,
 				DE69663E9C9A9E6BED68BD32 /* TestSupport.swift */,
 			);
 			path = DriveTimeTests;
@@ -434,11 +454,11 @@
 				};
 			};
 			buildConfigurationList = 1782601BF7434B6CE4A06BE5 /* Build configuration list for PBXProject "DriveTime" */;
-			developmentRegion = en;
+			developmentRegion = "zh-Hans";
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
-				en,
+				"zh-Hans",
 			);
 			mainGroup = 210EA13951AF9C495C744DDC;
 			minimizedProjectReferenceProxies = 1;
@@ -480,6 +500,7 @@
 				566C5CE9A9662ADEDEA3C2ED /* MapViewportTests.swift in Sources */,
 				29EA16905360B96A5E788924 /* ProviderModelTests.swift in Sources */,
 				B012651971B2B23E2FCC5491 /* RoutePlannerViewModelTests.swift in Sources */,
+				FF199461D412B12C87DA11FF /* SiriRouteQueryServiceTests.swift in Sources */,
 				DD5C7483F4FCD800D84BC31B /* TestSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -510,6 +531,8 @@
 				576C8EA99D4960034B3D2454 /* Controls.swift in Sources */,
 				2BC52A9B9F6F0432A9C363A9 /* DeparturePickerView.swift in Sources */,
 				5783CDCF541779F2594D058E /* DriveTimeApp.swift in Sources */,
+				70B758AED1895B5CB2C416FB /* DriveTimeAppShortcuts.swift in Sources */,
+				FB5180F74B34CF25F967EE61 /* DriveTimeRouteIntent.swift in Sources */,
 				4DC7922B1A829666407C3316 /* DriveTimeTheme.swift in Sources */,
 				D1B65CC9CD47A52DFE3ACEB1 /* Formatting.swift in Sources */,
 				58E19001B47D1C1B2F0FEE68 /* GeoCoordinate.swift in Sources */,
@@ -531,6 +554,7 @@
 				0A99D8F95CECCDF1CF63EC77 /* RoutingProvider.swift in Sources */,
 				5032706AEB6996EE48513E61 /* SavedModels.swift in Sources */,
 				DCEAE0D28BBC95076CAA3554 /* SettingsView.swift in Sources */,
+				087F7D9F23493D81D62C5F76 /* SiriRouteQueryService.swift in Sources */,
 				99338F9D523B8F1B615A26CB /* TripSearchCard.swift in Sources */,
 				44012885A5E72F14CD1EC252 /* TripSummarySheet.swift in Sources */,
 			);
@@ -728,7 +752,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -797,7 +821,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MARKETING_VERSION = 0.1.0;
+				MARKETING_VERSION = 0.2.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
