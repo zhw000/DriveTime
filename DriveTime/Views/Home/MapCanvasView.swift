@@ -146,11 +146,11 @@ enum MapViewportRegion {
             0
         )
 
-        // The result sheet overlays the bottom of the map. Reserve ~32% of the
-        // vertical viewport below the route and ~7% above it so both endpoints
+        // The result sheet overlays the bottom of the map. Reserve ~30% of the
+        // vertical viewport below the route and ~10% above it so both endpoints
         // remain visible above the collapsed sheet.
-        let topPaddingFraction = 0.07
-        let bottomPaddingFraction = 0.32
+        let topPaddingFraction = 0.10
+        let bottomPaddingFraction = 0.30
         let routeVerticalFraction = 1 - topPaddingFraction - bottomPaddingFraction
         let visibleLatMeters = max(routeLatMeters / routeVerticalFraction, minimumSpanMeters)
         let visibleLatDegrees = visibleLatMeters / 111_000

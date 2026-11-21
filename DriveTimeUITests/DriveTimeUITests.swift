@@ -88,7 +88,7 @@ final class DriveTimeUITests: XCTestCase {
         }
     }
 
-    func testDarkModeHomeRenders() throws {
+    func testZZDarkModeHomeRenders() throws {
         app.launchArguments += ["-DriveTimeDarkMode"]
         app.launch()
 

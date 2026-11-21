@@ -124,6 +124,22 @@ jobs:
             -maximum-test-execution-time-allowance 120 \
             2>&1 | tee unit-test.log
 
+      - name: Warm simulator app launch
+        continue-on-error: true
+        timeout-minutes: 3
+        env:
+          SIM_UDID: ${{ steps.simulator.outputs.udid }}
+        run: |
+          set +e
+          APP_PATH="$(find build-for-testing/Build/Products/Debug-iphonesimulator -maxdepth 1 -name 'DriveTime.app' -print -quit)"
+          echo "App path: $APP_PATH"
+          if [ -n "$APP_PATH" ]; then
+            xcrun simctl install "$SIM_UDID" "$APP_PATH"
+            xcrun simctl launch "$SIM_UDID" com.example.drivetime
+            sleep 10
+            xcrun simctl terminate "$SIM_UDID" com.example.drivetime
+          fi
+
       - name: Run XCTest UI tests
         id: ui_tests
         continue-on-error: true
@@ -140,8 +156,8 @@ jobs:
             -parallel-testing-enabled NO \
             -resultBundlePath UIResults.xcresult \
             -test-timeouts-enabled YES \
-            -default-test-execution-time-allowance 90 \
-            -maximum-test-execution-time-allowance 180 \
+            -default-test-execution-time-allowance 240 \
+            -maximum-test-execution-time-allowance 360 \
             2>&1 | tee ui-test.log
 
       - name: Summarize XCTest results

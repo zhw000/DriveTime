@@ -61,15 +61,9 @@ struct RootView: View {
                 )
                 .ignoresSafeArea()
 
-                topScrim
-
-                if isResultPresented {
-                    resultSheetPresentedHeader
-                } else {
-                    controls(proxy: proxy)
-                }
-
                 if !isResultPresented {
+                    topScrim
+                    controls(proxy: proxy)
                     bottomOverlay
                 }
             }
@@ -266,22 +260,7 @@ struct RootView: View {
     }
 
     private var resultSheetPresentedHeader: some View {
-        HStack {
-            HStack(spacing: 9) {
-                brandMark
-                Text("DriveTime")
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundStyle(DriveTimeTheme.ink)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(.regularMaterial, in: Capsule())
-            .overlay(Capsule().strokeBorder(DriveTimeTheme.hairline.opacity(0.5), lineWidth: 0.5))
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 6)
-        .allowsHitTesting(false)
+        EmptyView()
     }
 
     @ViewBuilder
