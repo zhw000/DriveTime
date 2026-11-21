@@ -60,6 +60,37 @@ jobs:
           xcrun simctl list devices available > /tmp/available-simulators.txt
           head -40 /tmp/available-simulators.txt
 
+      - name: Boot the selected simulator and open Simulator.app
+        id: boot
+        timeout-minutes: 6
+        env:
+          SIM_UDID: ${{ steps.simulator.outputs.udid }}
+        run: |
+          set -uo pipefail
+          xcrun simctl shutdown all || true
+          xcrun simctl boot "$SIM_UDID" || true
+          open -a Simulator --args -CurrentDeviceUDID "$SIM_UDID" || true
+          booted=0
+          for attempt in $(seq 1 36); do
+            if xcrun simctl list devices | grep "$SIM_UDID" | grep -q "(Booted)"; then
+              echo "Simulator booted after $((attempt * 5)) seconds"
+              booted=1
+              break
+            fi
+            echo "waiting for simulator (attempt $attempt)"
+            sleep 5
+          done
+          if [ "$booted" != "1" ]; then
+            echo "Simulator did not reach Booted state within 3 minutes" >&2
+            xcrun simctl list devices
+            exit 1
+          fi
+          # Give SpringBoard a short moment to finish launching before the test
+          # runner attaches. This bounded wait avoids simctl bootstatus, which
+          # can hang on hosted runners even when the device is usable.
+          sleep 8
+          xcrun simctl list devices | grep "$SIM_UDID" || true
+
       - name: Build app and test bundles for simulator
         timeout-minutes: 15
         run: |
