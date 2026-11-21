@@ -11,6 +11,7 @@ export interface Env {
   PROXY_ACCESS_TOKEN?: string;
   DRIVETIME_KV?: KVNamespace;
   RATE_LIMIT_PER_MINUTE?: string;
+  ALLOWED_ORIGINS?: string;
 }
 
 const AMAP_BASE = "https://restapi.amap.com";
@@ -349,7 +350,7 @@ function constantTimeEqual(left: string, right: string): boolean {
 
 function corsHeaders(request: Request, env: Env): Headers {
   const headers = new Headers();
-  const allowed = (env as Env & { ALLOWED_ORIGINS?: string }).ALLOWED_ORIGINS?.split(",")
+  const allowed = env.ALLOWED_ORIGINS?.split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
   const origin = request.headers.get("Origin");
@@ -380,27 +381,24 @@ function errorResponse(error: unknown, request: Request, env: Env): Response {
   const proxyError = error instanceof ProxyError
     ? error
     : new ProxyError(500, "INTERNAL_ERROR", "The proxy encountered an unexpected error.");
-  const headers = new Headers(corsHeaders(request, env));
-  if (proxyError.retryAfter) headers.set("Retry-After", String(proxyError.retryAfter));
   const body: JsonRecord = {
     error: {
       code: proxyError.code,
       message: proxyError.message,
     },
   };
-  return jsonResponse(body, proxyError.status, request, env);
+  const response = jsonResponse(body, proxyError.status, request, env);
+  if (proxyError.retryAfter) {
+    const headers = new Headers(response.headers);
+    headers.set("Retry-After", String(proxyError.retryAfter));
+    return new Response(response.body, { status: response.status, headers });
+  }
+  return response;
 }
 
-// Re-export pure helpers for a possible local Node test harness. Cloudflare
-// module workers ignore exports that are not the default handler.
+// Pure helpers used by the Worker and available for a local test harness.
 export {
   constantTimeEqual,
   parseCoordinateParam,
   parseLimit,
-  ensureWranglerCompatibility,
 };
-
-function ensureWranglerCompatibility(): void {
-  // Symbolic export to keep pure helpers available to tests without relying on
-  // a specific test runner. It intentionally has no runtime effect.
-}

@@ -45,6 +45,10 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: DriveTime
         ENABLE_PREVIEWS: YES
         SWIFT_STRICT_CONCURRENCY: targeted
+        # Optional compile-time default for the Cloudflare Worker base URL.
+        # Leave empty and configure it in the app's Settings screen, or set it
+        # here / in CI via xcodebuild without shipping any AMap key.
+        DRIVETIME_PROXY_BASE_URL: ""
       configs:
         Debug:
           SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG

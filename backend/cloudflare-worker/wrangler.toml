@@ -16,3 +16,5 @@ compatibility_date = "2026-06-01"
 
 [vars]
 RATE_LIMIT_PER_MINUTE = "20"
+# Optional browser origins allowed by CORS for local web debugging:
+# ALLOWED_ORIGINS = "http://localhost:5173"

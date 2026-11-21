@@ -8,8 +8,14 @@ struct SettingsView: View {
     @State private var proxyURLInput: String
     @State private var proxyTokenInput: String
     @State private var connectionState: ConnectionState = .idle
-    @State private var showClearHistoryAlert = false
-    @State private var showClearFavoritesAlert = false
+    @State private var dataConfirmation: DataConfirmation?
+
+    private enum DataConfirmation: String, Identifiable {
+        case history
+        case favorites
+
+        var id: String { rawValue }
+    }
 
     private enum ConnectionState: Equatable {
         case idle
@@ -170,7 +176,7 @@ struct SettingsView: View {
 
                 Section {
                     Button(role: .destructive) {
-                        showClearHistoryAlert = true
+                        dataConfirmation = .history
                     } label: {
                         HStack {
                             Text("清空查询历史")
@@ -182,7 +188,7 @@ struct SettingsView: View {
                     .accessibilityIdentifier("clearHistory")
 
                     Button(role: .destructive) {
-                        showClearFavoritesAlert = true
+                        dataConfirmation = .favorites
                     } label: {
                         HStack {
                             Text("清除收藏地点与路线标记")
@@ -235,21 +241,33 @@ struct SettingsView: View {
                     appModel.settings.defaultStrategy = .recommended
                 }
             }
-            .alert("清空查询历史？", isPresented: $showClearHistoryAlert) {
-                Button("清空", role: .destructive) {
-                    appModel.clearHistory()
-                }
-                Button("取消", role: .cancel) {}
-            } message: {
-                Text("将删除所有非收藏的历史记录，收藏路线会保留。")
-            }
-            .alert("清除收藏？", isPresented: $showClearFavoritesAlert) {
+            .alert(
+                dataConfirmation == .favorites ? "清除收藏？" : "清空查询历史？",
+                isPresented: Binding(
+                    get: { dataConfirmation != nil },
+                    set: { if !$0 { dataConfirmation = nil } }
+                )
+            ) {
                 Button("清除", role: .destructive) {
-                    appModel.history.clearFavorites()
+                    switch dataConfirmation {
+                    case .history:
+                        appModel.clearHistory()
+                    case .favorites:
+                        appModel.history.clearFavorites()
+                    case .none:
+                        break
+                    }
+                    dataConfirmation = nil
                 }
-                Button("取消", role: .cancel) {}
+                Button("取消", role: .cancel) {
+                    dataConfirmation = nil
+                }
             } message: {
-                Text("所有收藏地点和路线收藏标记都会被删除。")
+                if dataConfirmation == .favorites {
+                    Text("所有收藏地点和路线收藏标记都会被删除。")
+                } else {
+                    Text("将删除所有非收藏查询记录，收藏路线会保留。")
+                }
             }
         }
     }
@@ -316,10 +334,11 @@ struct SettingsView: View {
             do {
                 let health = try await AMapAPIClient(configuration: configuration).health()
                 let latency = health.latencyMilliseconds.map { " · \($0) ms" } ?? ""
-                connectionState = .success(
-                    (health.providerReachable ? "代理与高德服务可用" : "代理可达，高德状态未知")
-                        + latency
-                )
+                if health.isConfigured {
+                    connectionState = .success("代理可达，AMap Key 已配置\(latency)。路线请求时验证实际可用性。")
+                } else {
+                    connectionState = .failure("代理可达，但 Worker 尚未配置 AMAP_KEY。")
+                }
             } catch {
                 connectionState = .failure(RouteProviderError.map(error).userMessage)
             }

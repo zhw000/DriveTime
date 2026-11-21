@@ -55,6 +55,26 @@ struct AMapDrivingEnvelope: Decodable {
     var infocode: FlexibleString?
     var count: FlexibleString?
     var route: AMapDrivingRoutePayload?
+
+    enum CodingKeys: String, CodingKey {
+        case status
+        case info
+        case infocode
+        case count
+        case route
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        status = try container.decodeIfPresent(FlexibleString.self, forKey: .status)
+        info = try container.decodeIfPresent(FlexibleString.self, forKey: .info)
+        infocode = try container.decodeIfPresent(FlexibleString.self, forKey: .infocode)
+        count = try container.decodeIfPresent(FlexibleString.self, forKey: .count)
+        // AMap returns `"route": []` on some errors. The error status must still
+        // be readable, so an unexpected route container becomes nil instead of
+        // aborting the whole envelope decode.
+        route = try? container.decodeIfPresent(AMapDrivingRoutePayload.self, forKey: .route)
+    }
 }
 
 struct AMapDrivingRoutePayload: Decodable {
