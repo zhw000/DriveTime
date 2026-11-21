@@ -79,7 +79,7 @@ final class DriveTimeUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["设置"].waitForExistence(timeout: 5))
         XCTAssertTrue(element("providerPicker").exists)
         XCTAssertTrue(element("proxyURLField").exists)
-        addScreenshot(named: "05-settings")
+        addScreenshot(named: "06-settings")
 
         let done = app.buttons["完成"].firstMatch
         if done.exists {
@@ -95,7 +95,7 @@ final class DriveTimeUITests: XCTestCase {
             app.staticTexts["DriveTime"].waitForExistence(timeout: 8)
         )
         XCTAssertTrue(element("originField").exists)
-        addScreenshot(named: "06-home-dark")
+        addScreenshot(named: "07-home-dark")
     }
 
     private func element(_ identifier: String) -> XCUIElement {

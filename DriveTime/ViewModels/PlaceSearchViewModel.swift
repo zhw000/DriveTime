@@ -321,6 +321,7 @@ final class PlaceSearchViewModel {
     var providerLabel: String { engine.providerLabel }
 
     var shouldOfferSystemSettings: Bool {
+        guard let lastError else { return false }
         switch lastError {
         case .locationPermissionDenied, .locationUnavailable, .locationAccuracyInsufficient:
             return true

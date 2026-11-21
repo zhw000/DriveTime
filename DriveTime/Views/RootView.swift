@@ -1,11 +1,22 @@
 import MapKit
 import SwiftUI
 
-private enum AuxiliarySheet: String, Identifiable {
+private enum RootModal: Identifiable {
+    case result
+    case search(TripEndpoint)
     case settings
     case history
+    case departure
 
-    var id: String { rawValue }
+    var id: String {
+        switch self {
+        case .result: "result"
+        case .search(let endpoint): "search-\(endpoint.rawValue)"
+        case .settings: "settings"
+        case .history: "history"
+        case .departure: "departure"
+        }
+    }
 }
 
 struct RootView: View {
@@ -19,15 +30,16 @@ struct RootView: View {
             span: MKCoordinateSpan(latitudeDelta: 3.6, longitudeDelta: 3.6)
         )
     )
-    @State private var searchEndpoint: TripEndpoint?
-    @State private var auxiliarySheet: AuxiliarySheet?
-    @State private var showDeparturePicker = false
-    @State private var resultSheetPresented = false
+    @State private var modal: RootModal?
     @State private var resultDetent: PresentationDetent = .height(206)
 
     private var appModel: AppModel { appModelModel }
     private var planner: RoutePlannerViewModel { appModelModel.planner }
     private var isCompactHeight: Bool { verticalSizeClass == .compact }
+    private var isResultPresented: Bool {
+        if case .result = modal { return true }
+        return false
+    }
 
     private var uiTestColorScheme: ColorScheme? {
         #if DEBUG
@@ -51,13 +63,13 @@ struct RootView: View {
 
                 topScrim
 
-                if resultSheetPresented {
+                if isResultPresented {
                     resultSheetPresentedHeader
                 } else {
                     controls(proxy: proxy)
                 }
 
-                if !resultSheetPresented {
+                if !isResultPresented {
                     bottomOverlay
                 }
             }
@@ -73,12 +85,20 @@ struct RootView: View {
         }
         .onChange(of: planner.plan?.id) { _, newValue in
             guard newValue != nil else { return }
-            if !resultSheetPresented {
+            if !isResultPresented, modal == nil {
                 resultDetent = .height(206)
-                resultSheetPresented = true
+                modal = .result
             }
         }
-        .sheet(isPresented: $resultSheetPresented) {
+        .sheet(item: $modal) { destination in
+            modalContent(destination)
+        }
+    }
+
+    @ViewBuilder
+    private func modalContent(_ destination: RootModal) -> some View {
+        switch destination {
+        case .result:
             TripSummarySheet(
                 appModel: appModel,
                 detent: $resultDetent,
@@ -92,21 +112,38 @@ struct RootView: View {
             .presentationBackground(DriveTimeTheme.surface)
             .presentationCornerRadius(28)
             .presentationDragIndicator(.visible)
-        }
-        .sheet(item: $auxiliarySheet) { sheet in
-            switch sheet {
-            case .settings:
-                SettingsView(appModel: appModel)
-                    .presentationDetents([.large])
-            case .history:
-                HistoryView(appModel: appModel) { savedRoute in
-                    auxiliarySheet = nil
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                        planner.loadSavedTrip(savedRoute)
-                    }
+        case .search(let endpoint):
+            PlaceSearchView(
+                endpoint: endpoint,
+                appModel: appModel,
+                initialCoordinate: otherEndpointCoordinate(for: endpoint),
+                onSelect: { location in
+                    planner.setEndpoint(location, for: endpoint)
                 }
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.hidden)
+        case .settings:
+            SettingsView(appModel: appModel)
                 .presentationDetents([.large])
+        case .history:
+            HistoryView(appModel: appModel) { savedRoute in
+                modal = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    planner.loadSavedTrip(savedRoute)
+                }
             }
+            .presentationDetents([.large])
+        case .departure:
+            DeparturePickerView(
+                currentChoice: planner.departureChoice,
+                now: Date(),
+                formatter: appModel.settings.displayFormatter
+            ) { choice in
+                planner.setDepartureChoice(choice)
+            }
+            .presentationDetents([.height(430), .large])
+            .presentationDragIndicator(.visible)
         }
     }
 
@@ -147,11 +184,11 @@ struct RootView: View {
             }
             Spacer()
             CircleIconButton(systemName: "clock.arrow.circlepath", accessibilityLabel: "历史记录") {
-                auxiliarySheet = .history
+                modal = .history
             }
             .accessibilityIdentifier("historyButton")
             CircleIconButton(systemName: "gearshape", accessibilityLabel: "设置") {
-                auxiliarySheet = .settings
+                modal = .settings
             }
             .accessibilityIdentifier("settingsButton")
         }
@@ -188,36 +225,13 @@ struct RootView: View {
             availableStrategies: planner.availableStrategies,
             selectedStrategy: selectedStrategyForDisplay,
             departureLabel: departureLabel,
-            onOriginTap: { searchEndpoint = .origin },
-            onDestinationTap: { searchEndpoint = .destination },
+            onOriginTap: { modal = .search(.origin) },
+            onDestinationTap: { modal = .search(.destination) },
             onSwap: { planner.swapEndpoints() },
             onCalculate: { planner.calculateRoute() },
-            onDepartureTap: { showDeparturePicker = true },
+            onDepartureTap: { modal = .departure },
             onStrategySelected: { planner.setStrategy($0) }
         )
-        .sheet(item: $searchEndpoint) { endpoint in
-            PlaceSearchView(
-                endpoint: endpoint,
-                appModel: appModel,
-                initialCoordinate: otherEndpointCoordinate(for: endpoint),
-                onSelect: { location in
-                    planner.setEndpoint(location, for: endpoint)
-                }
-            )
-            .presentationDetents([.large])
-            .presentationDragIndicator(.hidden)
-        }
-        .sheet(isPresented: $showDeparturePicker) {
-            DeparturePickerView(
-                currentChoice: planner.departureChoice,
-                now: Date(),
-                formatter: appModel.settings.displayFormatter
-            ) { choice in
-                planner.setDepartureChoice(choice)
-            }
-            .presentationDetents([.height(430), .large])
-            .presentationDragIndicator(.visible)
-        }
     }
 
     @ViewBuilder
@@ -273,7 +287,7 @@ struct RootView: View {
     private var bottomOverlay: some View {
         VStack {
             Spacer()
-            if let plan = planner.plan, !resultSheetPresented {
+            if let plan = planner.plan, !isResultPresented {
                 reopenResultButton(plan: plan)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 8)
@@ -291,7 +305,7 @@ struct RootView: View {
     private func reopenResultButton(plan: RoutePlan) -> some View {
         Button {
             resultDetent = .height(206)
-            resultSheetPresented = true
+            modal = .result
         } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -330,7 +344,7 @@ struct RootView: View {
                         .foregroundStyle(DriveTimeTheme.secondaryInk)
                     Spacer()
                     Button("全部") {
-                        auxiliarySheet = .history
+                        modal = .history
                     }
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(DriveTimeTheme.accent)
@@ -412,9 +426,9 @@ struct RootView: View {
     }
 
     private func beginEditing(_ endpoint: TripEndpoint) {
-        resultSheetPresented = false
+        modal = nil
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-            searchEndpoint = endpoint
+            modal = .search(endpoint)
         }
     }
 }
