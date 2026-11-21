@@ -1,3 +1,4 @@
+import Foundation
 import SwiftData
 import XCTest
 @testable import DriveTime
@@ -11,7 +12,7 @@ final class RoutePlannerViewModelTests: XCTestCase {
         sut.vm.setEndpoint(TestSupport.location("杭州市西湖区", latitude: 30.25, longitude: 120.13), for: .destination)
 
         sut.vm.calculateRoute()
-        XCTAssertTrue(await waitUntil { sut.vm.phase == .success })
+        await assertEventually { sut.vm.phase == .success }
         let plan = try XCTUnwrap(sut.vm.plan)
         XCTAssertEqual(plan.provider, .appleMaps)
         XCTAssertEqual(plan.alternatives.count, 2)
@@ -29,7 +30,7 @@ final class RoutePlannerViewModelTests: XCTestCase {
         sut.vm.setEndpoint(TestSupport.location("B", latitude: 30.25, longitude: 120.13), for: .destination)
         sut.vm.selectedStrategy = .avoidTolls
         sut.vm.calculateRoute()
-        XCTAssertTrue(await waitUntil { sut.vm.phase == .success })
+        await assertEventually { sut.vm.phase == .success }
         let plan = try XCTUnwrap(sut.vm.plan)
         XCTAssertEqual(plan.strategy, .recommended)
         XCTAssertTrue(plan.notices.contains { $0.contains("不支持") })
@@ -92,7 +93,7 @@ final class RoutePlannerViewModelTests: XCTestCase {
         sut.vm.setEndpoint(TestSupport.location("B", latitude: 30.25, longitude: 120.13), for: .destination)
 
         sut.vm.calculateRoute()
-        XCTAssertTrue(await waitUntil { sut.vm.phase == .empty })
+        await assertEventually { sut.vm.phase == .empty }
         XCTAssertTrue(sut.vm.errorMessage?.contains("没有找到") == true)
         XCTAssertNil(sut.vm.plan)
     }
@@ -109,7 +110,7 @@ final class RoutePlannerViewModelTests: XCTestCase {
         sut.vm.setDepartureChoice(.scheduled(scheduled))
 
         sut.vm.calculateRoute()
-        XCTAssertTrue(await waitUntil { sut.vm.phase == .success })
+        await assertEventually { sut.vm.phase == .success }
         let plan = try XCTUnwrap(sut.vm.plan)
         XCTAssertEqual(plan.requestedDepartureAt, scheduled)
         XCTAssertEqual(plan.forecastAvailability, .projectedFromCurrent)
@@ -129,7 +130,7 @@ final class RoutePlannerViewModelTests: XCTestCase {
         sut.vm.setEndpoint(TestSupport.location("B", latitude: 30.25, longitude: 120.13), for: .destination)
 
         sut.vm.calculateRoute()
-        XCTAssertTrue(await waitUntil { sut.vm.phase == .success })
+        await assertEventually { sut.vm.phase == .success }
         let plan = try XCTUnwrap(sut.vm.plan)
         XCTAssertEqual(plan.provider, .appleMaps)
         XCTAssertTrue(plan.notices.contains { $0.contains("已改用 Apple 地图") })
@@ -142,7 +143,7 @@ final class RoutePlannerViewModelTests: XCTestCase {
         sut.vm.setEndpoint(TestSupport.location("A", latitude: 28.58, longitude: 121.36), for: .origin)
         sut.vm.setEndpoint(TestSupport.location("B", latitude: 30.25, longitude: 120.13), for: .destination)
         sut.vm.calculateRoute()
-        XCTAssertTrue(await waitUntil { sut.vm.phase == .success })
+        await assertEventually { sut.vm.phase == .success }
         XCTAssertFalse(sut.vm.canRefresh)
 
         sut.vm.refresh()
@@ -156,7 +157,7 @@ final class RoutePlannerViewModelTests: XCTestCase {
         sut.vm.setEndpoint(TestSupport.location("A", latitude: 28.58, longitude: 121.36), for: .origin)
         sut.vm.setEndpoint(TestSupport.location("B", latitude: 30.25, longitude: 120.13), for: .destination)
         sut.vm.calculateRoute()
-        XCTAssertTrue(await waitUntil { sut.vm.phase == .success })
+        await assertEventually { sut.vm.phase == .success }
         XCTAssertNotNil(sut.vm.plan)
 
         sut.vm.setEndpoint(TestSupport.location("C", latitude: 29.87, longitude: 121.55), for: .destination)

@@ -252,3 +252,14 @@ func waitUntil(
     }
     return condition()
 }
+
+@MainActor
+func assertEventually(
+    timeout: TimeInterval = 3,
+    file: StaticString = #filePath,
+    line: UInt = #line,
+    condition: @MainActor () -> Bool
+) async {
+    let reached = await waitUntil(timeout: timeout, condition: condition)
+    XCTAssertTrue(reached, "Condition was not satisfied before timeout", file: file, line: line)
+}

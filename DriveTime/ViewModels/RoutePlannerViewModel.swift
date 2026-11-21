@@ -425,6 +425,132 @@ final class RoutePlannerViewModel {
         var seen = Set<String>()
         return notices.filter { !$0.isEmpty && seen.insert($0).inserted }
     }
+
+    #if DEBUG
+    /// Explicitly labelled demo data for SwiftUI/UI automation only. This code
+    /// is compiled out of Release builds and never used by a normal app launch.
+    func activateUITestDemo() {
+        guard plan == nil else { return }
+        let now = Date()
+        let origin = LocationResult(
+            name: "台州市路桥区",
+            city: "台州市",
+            district: "路桥区",
+            address: "浙江省台州市路桥区",
+            coordinate: GeoCoordinate(latitude: 28.582, longitude: 121.373, datum: .gcj02),
+            provider: .amap,
+            source: .amap
+        )
+        let destination = LocationResult(
+            name: "杭州市西湖区",
+            city: "杭州市",
+            district: "西湖区",
+            address: "浙江省杭州市西湖区",
+            coordinate: GeoCoordinate(latitude: 30.259, longitude: 120.130, datum: .gcj02),
+            provider: .amap,
+            source: .amap
+        )
+        let mainCoordinates: [GeoCoordinate] = [
+            GeoCoordinate(latitude: 28.582, longitude: 121.373, datum: .gcj02),
+            GeoCoordinate(latitude: 28.650, longitude: 121.262, datum: .gcj02),
+            GeoCoordinate(latitude: 28.852, longitude: 121.144, datum: .gcj02),
+            GeoCoordinate(latitude: 29.192, longitude: 121.006, datum: .gcj02),
+            GeoCoordinate(latitude: 29.590, longitude: 120.821, datum: .gcj02),
+            GeoCoordinate(latitude: 30.002, longitude: 120.581, datum: .gcj02),
+            GeoCoordinate(latitude: 30.259, longitude: 120.130, datum: .gcj02)
+        ]
+        let alternativeCoordinates: [GeoCoordinate] = [
+            GeoCoordinate(latitude: 28.582, longitude: 121.373, datum: .gcj02),
+            GeoCoordinate(latitude: 28.720, longitude: 121.180, datum: .gcj02),
+            GeoCoordinate(latitude: 29.020, longitude: 120.990, datum: .gcj02),
+            GeoCoordinate(latitude: 29.440, longitude: 120.720, datum: .gcj02),
+            GeoCoordinate(latitude: 29.920, longitude: 120.470, datum: .gcj02),
+            GeoCoordinate(latitude: 30.259, longitude: 120.130, datum: .gcj02)
+        ]
+        let traffic = TrafficInformation(
+            segments: [
+                TrafficInformation.Segment(
+                    id: 0,
+                    level: .smooth,
+                    coordinates: Array(mainCoordinates.prefix(3)),
+                    lengthMeters: 72_000
+                ),
+                TrafficInformation.Segment(
+                    id: 1,
+                    level: .slow,
+                    coordinates: Array(mainCoordinates[2...4]),
+                    lengthMeters: 88_000
+                ),
+                TrafficInformation.Segment(
+                    id: 2,
+                    level: .congested,
+                    coordinates: Array(mainCoordinates[4...6]),
+                    lengthMeters: 59_300
+                )
+            ],
+            fetchedAt: now,
+            isComplete: true,
+            sourceLabel: "高德路况（演示）"
+        )
+        let main = RouteAlternative(
+            title: "推荐路线",
+            distanceMeters: 219_300,
+            expectedTravelTime: 9_360,
+            polyline: mainCoordinates,
+            steps: [
+                RouteStep(id: 0, instruction: "从路桥区出发，驶入 G15 沈海高速", distanceMeters: 12_500),
+                RouteStep(id: 1, instruction: "沿 G15 沈海高速向北行驶", distanceMeters: 126_800),
+                RouteStep(id: 2, instruction: "转入杭州绕城高速，前往西湖区", distanceMeters: 80_000)
+            ],
+            traffic: traffic,
+            tollAmountYuan: 88,
+            tollDistanceMeters: 186_000,
+            tollRoads: ["G15 沈海高速", "杭州绕城高速"],
+            hasTolls: true,
+            isRecommended: true,
+            notes: ["演示数据：该路线仅用于界面测试，不是实时地图服务结果。"]
+        )
+        let alternative = RouteAlternative(
+            title: "备选路线 2",
+            distanceMeters: 236_800,
+            expectedTravelTime: 10_260,
+            polyline: alternativeCoordinates,
+            steps: [
+                RouteStep(id: 0, instruction: "沿地方道路向北行驶", distanceMeters: 210_000),
+                RouteStep(id: 1, instruction: "进入西湖区", distanceMeters: 26_800)
+            ],
+            traffic: nil,
+            tollAmountYuan: 55,
+            tollDistanceMeters: 120_000,
+            tollRoads: ["地方高速"],
+            hasTolls: true,
+            isRecommended: false
+        )
+        let plan = RoutePlan(
+            provider: .amap,
+            origin: origin,
+            destination: destination,
+            strategy: .recommended,
+            requestedDepartureAt: now,
+            requestedAt: now,
+            fetchedAt: now,
+            alternatives: [main, alternative],
+            forecastAvailability: .currentConditions,
+            dataKind: .demo,
+            notices: [
+                "演示数据：仅在 DEBUG/UI 自动化测试中显示，不是地图服务返回的真实路线。",
+                "高德路况为演示分段，不代表当前或未来的实际交通。"
+            ]
+        )
+        self.origin = origin
+        self.destination = destination
+        self.selectedStrategy = .recommended
+        self.plan = plan
+        self.phase = .success
+        self.savedRouteID = nil
+        self.isPlanFavorite = false
+    }
+    #endif
 }
 
 extension PlannerPhase {

@@ -66,12 +66,26 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/DriveTime.app/DriveTime"
         BUNDLE_LOADER: "$(TEST_HOST)"
+  DriveTimeUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: DriveTimeUITests
+    dependencies:
+      - target: DriveTime
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.drivetime.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: DriveTime
 schemes:
   DriveTime:
     build:
       targets:
         DriveTime: all
         DriveTimeTests: [test]
+        DriveTimeUITests: [test]
     run:
       config: Debug
     test:
@@ -79,6 +93,7 @@ schemes:
       gatherCoverageData: true
       targets:
         - DriveTimeTests
+        - DriveTimeUITests
     profile:
       config: Release
     analyze:

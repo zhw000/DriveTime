@@ -78,6 +78,18 @@ jobs:
               --path TestResults.xcresult 2>/dev/null | tee test-summary.json || true
           fi
 
+      - name: Export UI test screenshots
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p ui-test-attachments
+          if [ -d TestResults.xcresult ]; then
+            xcrun xcresulttool export attachments \
+              --path TestResults.xcresult \
+              --output-path ui-test-attachments || true
+          fi
+          find ui-test-attachments -maxdepth 2 -type f -print || true
+
       - name: Upload test evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -87,6 +99,7 @@ jobs:
             TestResults.xcresult
             test.log
             test-summary.json
+            ui-test-attachments
             DriveTime.xcodeproj
           if-no-files-found: warn
           retention-days: 30

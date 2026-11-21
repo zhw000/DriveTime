@@ -29,6 +29,15 @@ struct RootView: View {
     private var planner: RoutePlannerViewModel { appModelModel.planner }
     private var isCompactHeight: Bool { verticalSizeClass == .compact }
 
+    private var uiTestColorScheme: ColorScheme? {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-DriveTimeDarkMode") {
+            return .dark
+        }
+        #endif
+        return nil
+    }
+
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .top) {
@@ -54,6 +63,14 @@ struct RootView: View {
             }
         }
         .background(DriveTimeTheme.canvas.ignoresSafeArea())
+        .preferredColorScheme(uiTestColorScheme)
+        .task {
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-DriveTimeDemo") {
+                appModel.planner.activateUITestDemo()
+            }
+            #endif
+        }
         .onChange(of: planner.plan?.id) { _, newValue in
             guard newValue != nil else { return }
             if !resultSheetPresented {

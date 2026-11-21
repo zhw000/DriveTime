@@ -23,6 +23,7 @@ struct TripSummarySheet: View {
             }
         }
         .background(DriveTimeTheme.surface)
+        .accessibilityIdentifier("tripSummary")
     }
 
     private func sheetContent(plan: RoutePlan) -> some View {
@@ -65,11 +66,6 @@ struct TripSummarySheet: View {
                     systemImage: plan.provider.iconName,
                     tint: DriveTimeTheme.secondaryInk
                 )
-                LabelChip(
-                    text: "\(formatter.timeString(for: plan.fetchedAt)) 更新",
-                    systemImage: "arrow.triangle.2.circlepath",
-                    tint: DriveTimeTheme.secondaryInk
-                )
                 if plan.usesProjectedTraffic {
                     LabelChip(
                         text: "未来时刻推算",
@@ -77,7 +73,44 @@ struct TripSummarySheet: View {
                         tint: DriveTimeTheme.warning
                     )
                 }
+                if plan.dataKind == .demo {
+                    LabelChip(
+                        text: "演示数据",
+                        systemImage: "testtube.2",
+                        tint: DriveTimeTheme.danger
+                    )
+                    .accessibilityIdentifier("demoBadge")
+                }
                 Spacer(minLength: 0)
+                if planner.availableStrategies.count > 1 {
+                    Menu {
+                        ForEach(planner.availableStrategies) { strategy in
+                            Button {
+                                planner.setStrategy(strategy)
+                            } label: {
+                                if strategy == plan.strategy {
+                                    Label(strategy.displayName, systemImage: "checkmark")
+                                } else {
+                                    Text(strategy.displayName)
+                                }
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: plan.strategy.iconName)
+                                .font(.system(size: 10, weight: .semibold))
+                            Text(plan.strategy.displayName)
+                                .font(.caption.weight(.medium))
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 8, weight: .bold))
+                        }
+                        .foregroundStyle(DriveTimeTheme.secondaryInk)
+                        .padding(.horizontal, 9)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(DriveTimeTheme.secondaryInk.opacity(0.09)))
+                    }
+                    .accessibilityIdentifier("resultStrategyMenu")
+                }
             }
 
             HStack(alignment: .top, spacing: 12) {
@@ -90,6 +123,7 @@ struct TripSummarySheet: View {
                         .minimumScaleFactor(0.62)
                         .contentTransition(reduceMotion ? .identity : .numericText())
                         .accessibilityLabel("预计驾车时间 \(TravelTimeFormatter.string(from: route.expectedTravelTime))")
+                        .accessibilityIdentifier("etaSummary")
 
                     HStack(spacing: 7) {
                         Text(formatter.relativeArrivalString(
@@ -188,6 +222,7 @@ struct TripSummarySheet: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(isCompact ? "展开车程详情" : "收起车程详情")
+        .accessibilityIdentifier("expandSheet")
     }
 
     private func compactMeta(plan: RoutePlan) -> some View {
