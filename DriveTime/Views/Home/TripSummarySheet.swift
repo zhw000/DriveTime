@@ -58,7 +58,7 @@ struct TripSummarySheet: View {
 
     private func summaryHeader(plan: RoutePlan) -> some View {
         let route = plan.selectedAlternative
-        VStack(alignment: .leading, spacing: 12) {
+        return VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 7) {
                 LabelChip(
                     text: plan.provider.displayName,
