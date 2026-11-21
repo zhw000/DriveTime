@@ -24,6 +24,9 @@ note() {
 
 [[ -d "$APP_PATH" ]] || fail "device build product not found: $APP_PATH"
 [[ -f "$APP_PATH/Info.plist" ]] || fail "app bundle has no Info.plist: $APP_PATH"
+APP_PATH="$(cd "$(dirname "$APP_PATH")" && pwd)/$(basename "$APP_PATH")"
+mkdir -p "$OUTPUT_DIR"
+OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
 
 PLATFORM="$(plutil -extract CFBundleSupportedPlatforms.0 raw -o - "$APP_PATH/Info.plist" 2>/dev/null || true)"
 [[ "$PLATFORM" == "iPhoneOS" ]] || fail "refusing to package a non-iPhoneOS bundle (CFBundleSupportedPlatforms.0=$PLATFORM)"
@@ -43,8 +46,12 @@ note "Checking the binary is a genuine arm64 iPhoneOS executable"
 file "$APP_PATH/$EXECUTABLE"
 ARCHS="$(lipo -archs "$APP_PATH/$EXECUTABLE" 2>/dev/null || true)"
 [[ "$ARCHS" == *arm64* ]] || fail "binary is not arm64: $ARCHS"
-BUILD_PLATFORM="$(vtool -show-build "$APP_PATH/$EXECUTABLE" 2>/dev/null | tr -d ' ' | grep -m1 '^platform:' || true)"
-[[ "$BUILD_PLATFORM" == "platform:IOS" ]] || fail "binary is not an iPhoneOS Mach-O (got $BUILD_PLATFORM)"
+BUILD_INFO="$(vtool -show-build "$APP_PATH/$EXECUTABLE" 2>/dev/null || true)"
+if ! printf '%s\n' "$BUILD_INFO" | grep -Eq 'platform[: ]+IOS'; then
+  echo "$BUILD_INFO" >&2
+  fail "binary is not an iPhoneOS Mach-O (vtool did not report platform IOS)"
+fi
+BUILD_PLATFORM="IOS"
 
 printf 'Bundle:      %s\nVersion:     %s (%s)\nMinimum iOS: %s\nPlatform:    %s / %s\nArchitectures: %s\n' \
   "$BUNDLE_ID" \
@@ -53,7 +60,6 @@ printf 'Bundle:      %s\nVersion:     %s (%s)\nMinimum iOS: %s\nPlatform:    %s 
   "$MIN_OS" "$PLATFORM" "$DT_PLATFORM" "$ARCHS"
 
 note "Staging Payload"
-mkdir -p "$OUTPUT_DIR"
 STAGING="$(mktemp -d "${TMPDIR:-/tmp}/drivetime-ipa.XXXXXX")"
 trap 'rm -rf "$STAGING"' EXIT
 mkdir -p "$STAGING/Payload"
@@ -74,7 +80,7 @@ rm -f "$IPA_PATH"
 note "Creating $IPA_PATH"
 (
   cd "$STAGING"
-  ditto -c -k --sequesterRsrc --keepParent Payload "$OLDPWD/$IPA_PATH"
+  ditto -c -k --sequesterRsrc --keepParent Payload "$IPA_PATH"
 )
 
 note "Verifying IPA structure"

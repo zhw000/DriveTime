@@ -35,8 +35,12 @@ DT_PLATFORM="$(plutil -extract DTPlatformName raw -o - "$APP/Info.plist" 2>/dev/
 [[ "$DT_PLATFORM" == "iphoneos" ]] || { echo "error: DTPlatformName is $DT_PLATFORM" >&2; exit 1; }
 EXECUTABLE="$(plutil -extract CFBundleExecutable raw -o - "$APP/Info.plist")"
 [[ -f "$APP/$EXECUTABLE" ]] || { echo "error: executable missing" >&2; exit 1; }
-BUILD_PLATFORM="$(vtool -show-build "$APP/$EXECUTABLE" 2>/dev/null | tr -d ' ' | grep -m1 '^platform:' || true)"
-[[ "$BUILD_PLATFORM" == "platform:IOS" ]] || { echo "error: Mach-O platform is $BUILD_PLATFORM" >&2; exit 1; }
+BUILD_PLATFORM="$(vtool -show-build "$APP/$EXECUTABLE" 2>/dev/null || true)"
+if ! printf '%s\n' "$BUILD_PLATFORM" | grep -Eq 'platform[: ]+IOS'; then
+  echo "error: Mach-O is not built for iPhoneOS" >&2
+  echo "$BUILD_PLATFORM" >&2
+  exit 1
+fi
 ARCHS="$(lipo -archs "$APP/$EXECUTABLE")"
 [[ "$ARCHS" == *arm64* ]] || { echo "error: missing arm64 slice ($ARCHS)" >&2; exit 1; }
 
