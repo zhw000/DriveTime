@@ -72,7 +72,7 @@ final class RoutePlannerViewModelTests: XCTestCase {
     func testCancellingInFlightRequestStopsProvider() async throws {
         let log = ProviderCallLog()
         let provider = SuspendingProvider(log: log)
-        let sut = try makeSUT(provider: provider)
+        let sut = try makeSUT(resolver: StubResolver(provider: provider))
         sut.vm.setEndpoint(TestSupport.location("A", latitude: 28.58, longitude: 121.36), for: .origin)
         sut.vm.setEndpoint(TestSupport.location("B", latitude: 30.25, longitude: 120.13), for: .destination)
 
