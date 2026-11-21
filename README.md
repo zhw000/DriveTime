@@ -8,7 +8,15 @@ DriveTime 是一款原生 iOS 驾车耗时与到达时间查询工具。它不�
 - 通过 GitHub Actions 在云端编译真正面向 **iPhoneOS** 的 `.app`，打包为 **未签名 IPA**。
 - 默认 Bundle ID 为 `com.example.drivetime`，可在重签名前替换。
 
-> **构建状态**：仓库的 iOS Device Build 工作流已实际完成无签名 iPhoneOS 构建并生成通过结构校验的 IPA。单元测试和 UI 测试的最终结果以 GitHub Actions 页面为准。本项目没有在真实 iPhone 上用你的证书安装验证过；CI 编译成功不等同于真机功能全部验证。
+> **验证状态（2026-11-21）**：提交 `4760b60` 已通过云端 CI。
+>
+> - **iOS Device Build**：成功，生成真实 **iPhoneOS arm64** 未签名 IPA；SHA-256 `b195718ff59464a97b11b6be4458b0e9ae81c0de0c2b5152756e24ea583cabe4`。
+> - **iOS Simulator Tests**：单元测试 **54 通过 / 0 失败 / 1 跳过**；UI 测试 **4/4 通过**。
+> - 环境：macOS 26、Xcode 26.6、iPhone 17 Pro Simulator（iOS 26.5）。
+> - 跳过的是真实 Apple MapKit 在线路线测试（Simulator 返回 `serverUnavailable`）；高德尚未使用真实 Key 联调。
+> - **尚未在真实 iPhone 上安装验证**；签名后的安装受证书、Profile、Bundle ID 和设备影响。
+>
+> 详细运行链接、产物校验与测试证据见 [`Docs/Verification.md`](Docs/Verification.md)。
 
 ---
 
@@ -108,9 +116,42 @@ DriveTime 是一款原生 iOS 驾车耗时与到达时间查询工具。它不�
 
 ## 截图与界面
 
-UI 测试会自动截取首页、地点搜索、演示路线紧凑/展开、设置页和深色首页，并上传到 GitHub Actions Artifact。
+以下截图来自通过 CI 的 iOS Simulator UI 测试（iPhone 17 Pro，iOS 26.5），原图也保存在 [`Docs/Screenshots`](Docs/Screenshots)。底部地图与真实服务使用相同的 MapKit 组件；路线结果截图使用界面上明确标注的 DEBUG 演示数据。
 
-> 截图来自自动化 UI 测试。路线结果使用明确标注的 DEBUG 演示数据，只用于验证布局和交互，不代表真实路线。
+<table>
+  <tr>
+    <td align="center"><img src="Docs/Screenshots/01-home-light.jpg" width="260" alt="首页浅色"></td>
+    <td align="center"><img src="Docs/Screenshots/02-place-search.jpg" width="260" alt="地点搜索"></td>
+    <td align="center"><img src="Docs/Screenshots/07-home-dark.jpg" width="260" alt="首页深色"></td>
+  </tr>
+  <tr>
+    <td align="center">首页 · 浅色</td>
+    <td align="center">地点搜索</td>
+    <td align="center">首页 · 深色</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="Docs/Screenshots/03-route-result-compact.jpg" width="260" alt="路线结果紧凑面板（演示数据）"></td>
+    <td align="center"><img src="Docs/Screenshots/04-route-result-expanded.jpg" width="260" alt="路线结果展开面板（演示数据）"></td>
+    <td align="center"><img src="Docs/Screenshots/06-settings.jpg" width="260" alt="设置"></td>
+  </tr>
+  <tr>
+    <td align="center">路线结果 · 紧凑（演示数据）</td>
+    <td align="center">路线结果 · 展开（演示数据）</td>
+    <td align="center">设置与高德代理</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="Docs/Screenshots/05-route-alternative.jpg" width="260" alt="切换备选路线（演示数据）"></td>
+    <td align="center" colspan="2">切换备选路线后，预计耗时、抵达时刻和过路费来自同一服务返回的另一条路线。</td>
+  </tr>
+  <tr>
+    <td align="center">备选路线（演示数据）</td>
+    <td align="center" colspan="2"></td>
+  </tr>
+</table>
+
+> 截图中的“演示数据”标记是刻意的。正常 Release App 不会加载这些数据；真实结果必须由 Apple MapKit 或已配置的高德代理返回。
+
+UI 测试会自动截取这些页面并上传到 GitHub Actions Artifact。
 
 设计方向：
 
@@ -148,7 +189,9 @@ DriveTimeUITests/          # XCTest UI 冒烟和截图
 backend/cloudflare-worker/ # 高德 Key 代理
 .github/workflows/         # Device Build / Simulator Tests / Release
 scripts/                   # XcodeGen、IPA 打包与验证
-project.yml                # Xcode 工程唯一事实来源
+Docs/                      # 验证证据与最终 UI 截图
+DriveTime.xcodeproj/       # CI 生成的完整 Xcode 工程
+project.yml                # Xcode 工程事实来源
 README.md
 ```
 
@@ -176,7 +219,7 @@ README.md
 
 ## 生成 Xcode 工程
 
-仓库以 `project.yml` 为事实来源。macOS 上：
+仓库以 `project.yml` 为事实来源，同时提交了由 CI（XcodeGen 2.48.0）生成的完整 `DriveTime.xcodeproj`，可直接在 macOS 上打开。若修改了工程结构，请重新生成：
 
 ```bash
 ./scripts/generate-project.sh
@@ -261,7 +304,7 @@ scripts/package-unsigned-ipa.sh \
 - `build.log`
 - CI 生成的 `DriveTime.xcodeproj`
 - `Release-iphoneos/DriveTime.app`
-- 测试工作流额外上传 `TestResults.xcresult`、`test.log`、`test-summary.json`、UI 截图。
+- 测试工作流额外上传 `UnitResults.xcresult`、`UIResults.xcresult`、`unit-test.log`、`ui-test.log`、测试摘要 JSON 和 UI 截图。
 
 ### CI 安全
 
@@ -287,7 +330,8 @@ Release 为 prerelease，标题 `DriveTime v0.1.0`，正文明确 **Unsigned IPA
 > 未签名 IPA 不能直接安装。你需要 Apple 开发证书、匹配的 Provisioning Profile 和设备授权。
 
 1. 从 Actions Artifact 或 Release 下载 `DriveTime-unsigned.ipa`。
-2. 校验 SHA-256：`shasum -a 256 DriveTime-unsigned.ipa`，与 `checksums.txt` 对照。
+2. 校验 SHA-256：`shasum -a 256 DriveTime-unsigned.ipa`，与 `checksums.txt` 对照。本文验证的提交 `4760b60` 的 Device Build IPA 为：
+   `b195718ff59464a97b11b6be4458b0e9ae81c0de0c2b5152756e24ea583cabe4`（1,221,445 bytes）。GitHub Release 会重新构建，最终以 Release 附带的 `checksums.txt` 为准。
 3. 用 Sideloadly、AltStore、ESign、TrollStore 或自己的 `codesign` 流程签名。
 4. 安装到设备。
 
@@ -439,6 +483,12 @@ DRIVETIME_PROXY_BASE_URL="https://your-worker.workers.dev"
 
 ## 测试
 
+已验证结果（提交 `4760b60`，运行 [Simulator Tests #19](https://github.com/zhw000/DriveTime/actions/runs/44882877674)）：
+
+- 单元测试：**54 passed / 0 failed / 1 skipped**
+- UI 测试：**4 passed / 0 failed**
+- 唯一跳过项：`AppleMapLiveIntegrationTests` 尝试真实 `MKDirections` 请求，Simulator 返回 `serverUnavailable`；因此如实标记为未验证，而不是伪造通过。
+
 ### 单元测试
 
 `DriveTimeTests/` 覆盖：
@@ -460,6 +510,7 @@ DRIVETIME_PROXY_BASE_URL="https://your-worker.workers.dev"
 - 刷新冷却
 - 自动回退 Apple 且显式提示
 - 未来出发的“推算”标记与时间快照
+- 地图视野为结果 Sheet 预留底部空间
 - SwiftData 历史/收藏/删除/清空保留收藏
 - Keychain 内存 mock
 - WGS-84 ↔ GCJ-02 往返与海外/香港不偏移
@@ -509,13 +560,16 @@ CI 自动选择已安装的 iPhone Simulator，不硬编码不存在的设备。
 - GitHub Actions 在 `macos-26` + Xcode 26.6 上完成 Release iPhoneOS 无签名构建。
 - `package-unsigned-ipa.sh` / `verify-ipa.sh` 在 CI 实际运行并通过，确认 IPA 内是 iPhoneOS、arm64、非 Simulator。
 - Apple MapKit 和高德 Provider 实现完整；Apple 不需要 Key；高德需要你的 Worker。
-- 单元测试和 UI 测试已接入 CI；最终结果看 Actions 最新运行。
+- **提交 `4760b60` 的实际 CI 结果**：iPhoneOS 设备构建成功；未签名 IPA 结构校验通过；单元测试 54 通过、1 个真实 MapKit 在线测试跳过；UI 测试 4/4 通过。
+- 完整 Xcode 工程已由 CI 生成并提交到 `DriveTime.xcodeproj`。
 - Windows 无法编译 iOS，所有编译结论来自 GitHub Actions。
+- 详细证据：[`Docs/Verification.md`](Docs/Verification.md)。
 
 ### 尚未验证 / 已知限制
 
 - **未用你的证书在真实 iPhone 安装验证。**
 - **未使用真实高德 Key 在线查询。**
+- **真实 Apple MapKit 在线路线请求在 Simulator 中返回 `serverUnavailable`，因此该实时集成测试被跳过；未用真机补验。**
 - Apple MapKit 不返回逐路段交通状态；Apple 路线“路况”显示暂无逐段数据。可选底图路况图层不等于路线 TMC。
 - AMap v5 驾车无未来预测参数；未来出发是“当前路况推算”。
 - AMap 驾车可能只返回一条路线；不伪造多方案。
@@ -523,7 +577,7 @@ CI 自动选择已安装的 iPhone Simulator，不硬编码不存在的设备。
 - 未集成高德 iOS SDK。
 - 未做 iPad 专门布局（目标 iPhone），横屏已做基础适配。
 - Demo 数据仅用于 DEBUG UI 测试。
-- 仓库中 Xcode 工程由 XcodeGen 生成；以 CI Artifact 或本地重新生成结果为准。
+- 仓库中同时有 CI 生成的 `DriveTime.xcodeproj` 与事实来源 `project.yml`；修改工程结构后应重新生成并提交。
 
 ---
 
