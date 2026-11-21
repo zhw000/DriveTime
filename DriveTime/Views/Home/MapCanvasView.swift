@@ -137,19 +137,43 @@ enum MapViewportRegion {
             minLon = min(minLon, coordinate.longitude)
             maxLon = max(maxLon, coordinate.longitude)
         }
-        let center = CLLocationCoordinate2D(
-            latitude: (minLat + maxLat) / 2,
-            longitude: (minLon + maxLon) / 2
+
+        let routeCenterLat = (minLat + maxLat) / 2
+        let routeCenterLon = (minLon + maxLon) / 2
+        let routeLatMeters = max((maxLat - minLat) * 111_000, 0)
+        let routeLonMeters = max(
+            (maxLon - minLon) * 111_000 * cos(routeCenterLat * .pi / 180),
+            0
         )
-        let latMeters = max((maxLat - minLat) * 111_000 * 1.35, minimumSpanMeters)
-        let lonMeters = max(
-            (maxLon - minLon) * 111_000 * cos(center.latitude * .pi / 180) * 1.35,
+
+        // The result sheet overlays the bottom of the map. Reserve ~32% of the
+        // vertical viewport below the route and ~7% above it so both endpoints
+        // remain visible above the collapsed sheet.
+        let topPaddingFraction = 0.07
+        let bottomPaddingFraction = 0.32
+        let routeVerticalFraction = 1 - topPaddingFraction - bottomPaddingFraction
+        let visibleLatMeters = max(routeLatMeters / routeVerticalFraction, minimumSpanMeters)
+        let visibleLatDegrees = visibleLatMeters / 111_000
+        let centerLatitude = routeCenterLat
+            + (topPaddingFraction - bottomPaddingFraction) * visibleLatDegrees / 2
+
+        let horizontalPaddingFraction = 0.12
+        let visibleLonMeters = max(
+            routeLonMeters / (1 - 2 * horizontalPaddingFraction),
             minimumSpanMeters
         )
+        let metersPerDegreeLon = 111_000 * cos(routeCenterLat * .pi / 180)
+        let visibleLonDegrees = visibleLonMeters / max(metersPerDegreeLon, 1)
+
         return MKCoordinateRegion(
-            center: center,
-            latitudinalMeters: latMeters,
-            longitudinalMeters: lonMeters
+            center: CLLocationCoordinate2D(
+                latitude: centerLatitude,
+                longitude: routeCenterLon
+            ),
+            span: MKCoordinateSpan(
+                latitudeDelta: visibleLatDegrees,
+                longitudeDelta: visibleLonDegrees
+            )
         )
     }
 }
