@@ -190,7 +190,7 @@ struct AppleMapRoutingProvider: RoutingProvider {
         }
     }
 
-    private func performETA(_ request: MKDirections.Request) async throws -> MKETAResponse {
+    private func performETA(_ request: MKDirections.Request) async throws -> MKDirections.ETAResponse {
         let operation = MKDirections(request: request)
         let box = DirectionsBox(operation: operation)
         return try await withTaskCancellationHandler {

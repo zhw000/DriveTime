@@ -109,7 +109,10 @@ enum RouteProviderError: Error, Equatable, Sendable {
         case .quotaExceeded:
             return "quotaExceeded"
         case .rateLimited(let retryAfter):
-            return "rateLimited: \(retryAfter.map(String.init) ?? "nil")"
+            if let retryAfter {
+                return "rateLimited: \(retryAfter)"
+            }
+            return "rateLimited"
         case .networkUnavailable:
             return "networkUnavailable"
         case .timedOut:

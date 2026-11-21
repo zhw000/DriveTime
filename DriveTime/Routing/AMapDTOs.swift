@@ -143,10 +143,12 @@ struct AMapDrivingStep: Decodable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         instruction = try container.decodeIfPresent(FlexibleString.self, forKey: .instruction)
-        roadName = (try container.decodeIfPresent(FlexibleString.self, forKey: .roadName))
-            ?? (try container.decodeIfPresent(FlexibleString.self, forKey: .road))
-        stepDistance = (try container.decodeIfPresent(FlexibleString.self, forKey: .stepDistance))
-            ?? (try container.decodeIfPresent(FlexibleString.self, forKey: .distance))
+        let primaryRoadName = try container.decodeIfPresent(FlexibleString.self, forKey: .roadName)
+        let fallbackRoadName = try container.decodeIfPresent(FlexibleString.self, forKey: .road)
+        roadName = primaryRoadName ?? fallbackRoadName
+        let primaryStepDistance = try container.decodeIfPresent(FlexibleString.self, forKey: .stepDistance)
+        let fallbackStepDistance = try container.decodeIfPresent(FlexibleString.self, forKey: .distance)
+        stepDistance = primaryStepDistance ?? fallbackStepDistance
         duration = try container.decodeIfPresent(FlexibleString.self, forKey: .duration)
         cost = try container.decodeIfPresent(AMapDrivingStepCost.self, forKey: .cost)
         polyline = try container.decodeIfPresent(FlexibleString.self, forKey: .polyline)
@@ -189,12 +191,15 @@ struct AMapTMC: Decodable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        status = (try container.decodeIfPresent(FlexibleString.self, forKey: .tmcStatus))
-            ?? (try container.decodeIfPresent(FlexibleString.self, forKey: .status))
-        distance = (try container.decodeIfPresent(FlexibleString.self, forKey: .tmcDistance))
-            ?? (try container.decodeIfPresent(FlexibleString.self, forKey: .distance))
-        polyline = (try container.decodeIfPresent(FlexibleString.self, forKey: .tmcPolyline))
-            ?? (try container.decodeIfPresent(FlexibleString.self, forKey: .polyline))
+        let primaryStatus = try container.decodeIfPresent(FlexibleString.self, forKey: .tmcStatus)
+        let fallbackStatus = try container.decodeIfPresent(FlexibleString.self, forKey: .status)
+        status = primaryStatus ?? fallbackStatus
+        let primaryDistance = try container.decodeIfPresent(FlexibleString.self, forKey: .tmcDistance)
+        let fallbackDistance = try container.decodeIfPresent(FlexibleString.self, forKey: .distance)
+        distance = primaryDistance ?? fallbackDistance
+        let primaryPolyline = try container.decodeIfPresent(FlexibleString.self, forKey: .tmcPolyline)
+        let fallbackPolyline = try container.decodeIfPresent(FlexibleString.self, forKey: .polyline)
+        polyline = primaryPolyline ?? fallbackPolyline
     }
 }
 

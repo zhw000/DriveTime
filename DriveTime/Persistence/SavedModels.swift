@@ -82,7 +82,7 @@ final class SavedRoute {
         self.note = note
     }
 
-    init(plan: RoutePlan, isFavorite: Bool = false) {
+    convenience init(plan: RoutePlan, isFavorite: Bool = false) {
         let selected = plan.selectedAlternative
         self.init(
             origin: plan.origin,

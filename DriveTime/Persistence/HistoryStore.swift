@@ -57,6 +57,10 @@ final class HistoryStore {
         refresh()
     }
 
+    func route(withID id: UUID) -> SavedRoute? {
+        recentRoutes.first { $0.id == id }
+    }
+
     func toggleFavoritePlace(_ location: LocationResult) {
         if let existing = favoritePlaces.first(where: { matches($0, location) }) {
             context.delete(existing)

@@ -46,8 +46,8 @@ actor URLSessionHTTPClient: HTTPPerforming {
         for attempt in 1...max(1, policy.maxAttempts) {
             try Task.checkCancellation()
             do {
-                let (data, response) = try await session.data(for: request)
-                guard let http = response as? HTTPURLResponse else {
+                let (data, urlResponse) = try await session.data(for: request)
+                guard let http = urlResponse as? HTTPURLResponse else {
                     throw RouteProviderError.invalidResponse("非 HTTP 响应")
                 }
                 let headers = http.allHeaderFields.reduce(into: [String: String]()) { result, pair in

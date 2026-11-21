@@ -64,6 +64,8 @@ final class RoutePlannerViewModel {
     /// plan on screen.
     private(set) var inlineError: String?
     private(set) var lastRequestStartedAt: Date?
+    private(set) var savedRouteID: UUID?
+    private(set) var isPlanFavorite = false
 
     let settings: AppSettings
     private let history: HistoryStore
@@ -182,6 +184,12 @@ final class RoutePlannerViewModel {
         }
     }
 
+    func selectRoute(id: UUID) {
+        guard var currentPlan = plan, currentPlan.selectedRouteID != id else { return }
+        currentPlan.selectRoute(id: id)
+        plan = currentPlan
+    }
+
     func loadTrip(origin: LocationResult, destination: LocationResult, autostart: Bool = true) {
         self.origin = origin
         self.destination = destination
@@ -262,6 +270,16 @@ final class RoutePlannerViewModel {
         inlineError = nil
     }
 
+    func toggleFavoriteForCurrentPlan() {
+        guard let savedRouteID, let route = history.route(withID: savedRouteID) else { return }
+        history.toggleFavorite(route: route)
+        isPlanFavorite = route.isFavorite
+    }
+
+    var canToggleFavorite: Bool {
+        savedRouteID != nil
+    }
+
     // MARK: - Query pipeline
 
     private func execute(
@@ -323,6 +341,9 @@ final class RoutePlannerViewModel {
                 notices.append("当前地图服务不提供该时刻的交通预测，车程按当前路况估算，抵达时间仅供参考。")
             }
 
+            guard !result.alternatives.isEmpty else {
+                throw RouteProviderError.noRoute
+            }
             let plan = RoutePlan(
                 provider: result.provider,
                 origin: request.origin,
@@ -357,7 +378,9 @@ final class RoutePlannerViewModel {
         inlineError = nil
         routingTask = nil
         selectedStrategy = plan.strategy
-        _ = history.record(plan: plan)
+        let saved = history.record(plan: plan)
+        savedRouteID = saved.id
+        isPlanFavorite = saved.isFavorite
     }
 
     private func handleFailure(_ error: RouteProviderError) {
@@ -380,6 +403,8 @@ final class RoutePlannerViewModel {
         activeRequestID = nil
         plan = nil
         inlineError = nil
+        savedRouteID = nil
+        isPlanFavorite = false
         phase = hasEndpoints ? .ready : .idle
     }
 
