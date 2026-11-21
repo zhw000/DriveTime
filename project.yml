@@ -31,6 +31,9 @@ targets:
       - path: DriveTime
         excludes:
           - "Resources/Info.plist"
+          - "Resources/PrivacyInfo.xcprivacy"
+      - path: DriveTime/Resources/PrivacyInfo.xcprivacy
+        buildPhase: resources
     settings:
       base:
         PRODUCT_NAME: DriveTime

@@ -49,16 +49,16 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate --spec project.yml
 
-      - name: Discover and boot an installed iPhone simulator
+      - name: Discover an installed iPhone simulator
         id: simulator
-        timeout-minutes: 10
+        timeout-minutes: 3
         run: |
           set -euo pipefail
           UDID="$(python3 scripts/pick-simulator.py)"
           [[ -n "$UDID" ]] || { echo "No simulator UDID discovered" >&2; exit 1; }
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
-          xcrun simctl boot "$UDID" 2>/dev/null || true
-          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl list devices available > /tmp/available-simulators.txt
+          head -40 /tmp/available-simulators.txt
 
       - name: Build app and test bundles for simulator
         timeout-minutes: 15
@@ -69,6 +69,7 @@ jobs:
             -scheme DriveTime \
             -configuration Debug \
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -destination-timeout 180 \
             -derivedDataPath build-for-testing \
             build-for-testing 2>&1 | tee build-test.log
 
@@ -82,6 +83,7 @@ jobs:
             -project DriveTime.xcodeproj \
             -scheme DriveTime \
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -destination-timeout 180 \
             -derivedDataPath build-for-testing \
             -only-testing:DriveTimeTests \
             -parallel-testing-enabled NO \
@@ -101,6 +103,7 @@ jobs:
             -project DriveTime.xcodeproj \
             -scheme DriveTime \
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -destination-timeout 180 \
             -derivedDataPath build-for-testing \
             -only-testing:DriveTimeUITests \
             -parallel-testing-enabled NO \
