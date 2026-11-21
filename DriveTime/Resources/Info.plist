@@ -28,6 +28,8 @@
 	<string>$(DRIVETIME_PROXY_BASE_URL)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>DriveTime 使用你的位置作为路线起点，并显示当前位置附近的搜索结果。位置只在本机使用，不会上传到 DriveTime 服务器。</string>
+	<key>NSSiriUsageDescription</key>
+	<string>DriveTime 使用 Siri 接收你的驾车时间查询，并向你朗读预计车程与到达时间。</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>

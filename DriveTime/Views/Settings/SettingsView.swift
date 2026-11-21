@@ -53,6 +53,31 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("对 Siri 说：")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text("“用 DriveTime 查询驾车时间”")
+                            .font(.body.weight(.semibold))
+                        Text("“让 DriveTime 计算车程”")
+                            .font(.body.weight(.semibold))
+                        Text("Siri 会依次询问起点和终点，然后用当前服务计算真实路线、预计车程和到达时间。")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 2)
+                    .accessibilityIdentifier("siriShortcutsSection")
+
+                    Text("Siri 查询与 App 共用地图服务设置；如果使用高德，请先配置下方代理。App 安装后会自动出现在快捷指令的 DriveTime 分类中。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } header: {
+                    Text("Siri 与快捷指令")
+                } footer: {
+                    Text("如果 Siri 找不到 DriveTime，请打开一次 App，并在系统“设置 → Siri 与搜索 → DriveTime”中允许使用。Siri 语音识别与可用性由系统控制，本工程不包含独立 Intents Extension。")
+                }
+
+                Section {
                     LabeledContent("代理状态") {
                         HStack(spacing: 5) {
                             Circle()

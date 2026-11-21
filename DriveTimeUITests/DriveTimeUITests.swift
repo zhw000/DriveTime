@@ -80,6 +80,7 @@ final class DriveTimeUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["设置"].waitForExistence(timeout: 5))
         XCTAssertTrue(element("providerPicker").exists)
         XCTAssertTrue(element("proxyURLField").exists)
+        XCTAssertTrue(app.staticTexts["Siri 与快捷指令"].exists)
         addScreenshot(named: "06-settings")
 
         let done = app.buttons["完成"].firstMatch
