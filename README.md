@@ -11,7 +11,8 @@ DriveTime 是一款原生 iOS 驾车耗时与到达时间查询工具。它不�
 
 > **验证状态（2026-11-21，v0.2.0 + Siri）**：提交 `c186ac7` 已通过云端 CI。
 >
-> - **iOS Device Build**：成功，生成真实 **iPhoneOS arm64** 未签名 IPA；SHA-256 `b47740c312ae56e0b2fccf9f6739098e2f06b9c7d0f42f17b3a37478a5a0104a`，1,268,601 bytes。
+> - **iOS Device Build**：成功，生成真实 **iPhoneOS arm64** 未签名 IPA。
+> - **GitHub Release v0.2.0**：https://github.com/zhw000/DriveTime/releases/tag/v0.2.0；Release IPA SHA-256 `a753b2cf0b08d20d930fa736800a07792a6bd7ee6f9d0eb95e460eb0c7e1cefd`，1,268,599 bytes。
 > - **iOS Simulator Tests**：单元测试 **63 通过 / 0 失败 / 1 跳过**；UI 测试 **4/4 通过**。
 > - **Siri 构建证据**：构建日志确认生成 `Metadata.appintents`，App Shortcut 短语以 **zh-Hans** 训练；语音唤起本身未在 CI 验证。
 > - 环境：macOS 26、Xcode 26.6、iPhone 17 Pro Simulator（iOS 26.5）。
@@ -392,8 +393,9 @@ Release 为 prerelease，标题 `DriveTime v0.2.0`，正文明确 **Unsigned IPA
 > 未签名 IPA 不能直接安装。你需要 Apple 开发证书、匹配的 Provisioning Profile 和设备授权。
 
 1. 从 Actions Artifact 或 Release 下载 `DriveTime-unsigned.ipa`。
-2. 校验 SHA-256：`shasum -a 256 DriveTime-unsigned.ipa`，与 `checksums.txt` 对照。本文 v0.2.0 的 Device Build IPA 为：
-   `b47740c312ae56e0b2fccf9f6739098e2f06b9c7d0f42f17b3a37478a5a0104a`（1,268,601 bytes）。GitHub Release 会重新构建，最终以 Release 附带的 `checksums.txt` 为准。
+2. 校验 SHA-256：`shasum -a 256 DriveTime-unsigned.ipa`，与 `checksums.txt` 对照。v0.2.0 Release IPA 为：
+   `a753b2cf0b08d20d930fa736800a07792a6bd7ee6f9d0eb95e460eb0c7e1cefd`（1,268,599 bytes）；Release 页面：
+   <https://github.com/zhw000/DriveTime/releases/tag/v0.2.0>。
 3. 用 Sideloadly、AltStore、ESign、TrollStore 或自己的 `codesign` 流程签名。
 4. 安装到设备。
 

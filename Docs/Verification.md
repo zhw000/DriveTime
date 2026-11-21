@@ -15,7 +15,8 @@ does not claim physical-device, live-AMap, or live-Siri verification.
 |---|---|---|
 | iOS Device Build | https://github.com/zhw000/DriveTime/actions/runs/44895248612 | **success** |
 | iOS Simulator Tests | https://github.com/zhw000/DriveTime/actions/runs/44895248663 | **success** |
-| Release Unsigned IPA | see the v0.2.0 GitHub Release | **success** |
+| Release Unsigned IPA | https://github.com/zhw000/DriveTime/actions/runs/44896659279 | **success** |
+| Published release | https://github.com/zhw000/DriveTime/releases/tag/v0.2.0 | **prerelease** |
 
 Environment reported by the workflow and xcresult:
 
@@ -76,9 +77,18 @@ Produced by the v0.2.0 device-build run:
 - Bundle ID: `com.example.drivetime`
 - Version: `0.2.0` (build `1`)
 - Minimum iOS: `17.0`
-- SHA-256: `b47740c312ae56e0b2fccf9f6739098e2f06b9c7d0f42f17b3a37478a5a0104a`
-- Size: `1,268,601` bytes
-- Device `.app` size: `5.8 MB`
+- Device-build SHA-256: `b47740c312ae56e0b2fccf9f6739098e2f06b9c7d0f42f17b3a37478a5a0104a`
+- Device-build size: `1,268,601` bytes
+
+Published **v0.2.0 Release** asset (rebuilt from the release tag):
+
+- File: `DriveTime-unsigned.ipa`
+- SHA-256: `a753b2cf0b08d20d930fa736800a07792a6bd7ee6f9d0eb95e460eb0c7e1cefd`
+- Size: `1,268,599` bytes
+- Release: https://github.com/zhw000/DriveTime/releases/tag/v0.2.0
+- Verified IPA contents include `Metadata.appintents` with `locale: zh-Hans`,
+  `CFBundleDevelopmentRegion = zh-Hans`, `CFBundleSupportedPlatforms = [iPhoneOS]`,
+  `DTPlatformName = iphoneos`, arm64, no `_CodeSignature`, and no embedded profile.
 
 The package script verified:
 
@@ -88,9 +98,8 @@ The package script verified:
 - IPA contains `Payload/DriveTime.app` and no `_CodeSignature`
 - no embedded provisioning profile
 
-This artifact is **unsigned** and must be signed by the recipient. A GitHub
-Release rebuild may produce a different hash; use the `checksums.txt` attached
-to that Release as authoritative for the downloaded asset.
+This artifact is **unsigned** and must be signed by the recipient. Use
+`checksums.txt` attached to the v0.2.0 Release for the downloaded asset.
 
 ## Not verified
 
