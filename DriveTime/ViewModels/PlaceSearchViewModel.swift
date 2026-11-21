@@ -1,6 +1,7 @@
 import CoreLocation
 import Foundation
 import MapKit
+import Observation
 
 struct PlaceSuggestion: Identifiable {
     enum Payload {
