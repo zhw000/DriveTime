@@ -115,7 +115,8 @@ struct PrimaryButton: View {
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 50)
+            .frame(minHeight: 50)
+            .padding(.vertical, 2)
             .background(
                 RoundedRectangle(cornerRadius: 15, style: .continuous)
                     .fill(isEnabled ? DriveTimeTheme.accent : DriveTimeTheme.tertiaryInk.opacity(0.45))

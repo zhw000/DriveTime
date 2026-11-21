@@ -153,8 +153,6 @@ struct TripSummarySheet: View {
                             .foregroundStyle(DriveTimeTheme.warning)
                     }
                 }
-                .accessibilityElement(children: .combine)
-
                 Spacer(minLength: 0)
 
                 VStack(spacing: 8) {
@@ -365,6 +363,7 @@ struct TripSummarySheet: View {
         .buttonStyle(.plain)
         .accessibilityLabel("\(route.title)，\(TravelTimeFormatter.string(from: route.expectedTravelTime))，\(DistanceFormatter.string(fromMeters: route.distanceMeters, unit: settings.distanceUnit))")
         .accessibilityHint(isSelected ? "当前选中" : "轻点切换路线")
+        .accessibilityIdentifier("routeOption-\(route.title)")
     }
 
     private func factsSection(plan: RoutePlan) -> some View {

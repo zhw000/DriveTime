@@ -38,8 +38,8 @@ struct PlaceSearchView: View {
                     if let message = viewModel.errorMessage {
                         InlineErrorBanner(
                             message: message,
-                            actionTitle: "打开系统设置",
-                            action: openSystemSettings
+                            actionTitle: viewModel.shouldOfferSystemSettings ? "打开系统设置" : nil,
+                            action: viewModel.shouldOfferSystemSettings ? openSystemSettings : nil
                         )
                         .padding(.horizontal, DriveTimeTheme.contentPadding)
                         .padding(.bottom, 12)
@@ -67,6 +67,9 @@ struct PlaceSearchView: View {
         }
         .onDisappear {
             viewModel.cancel()
+        }
+        .onAppear {
+            viewModel.refreshPermission()
         }
         .sheet(isPresented: $showMapPicker) {
             MapPickerView(

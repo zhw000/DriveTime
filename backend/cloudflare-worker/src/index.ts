@@ -208,7 +208,7 @@ async function fetchAMapJSON(url: URL): Promise<JsonRecord> {
   if (buffer.byteLength > MAX_RESPONSE_BYTES) {
     throw new ProxyError(502, "UPSTREAM_TOO_LARGE", "AMap response exceeded the proxy limit.");
   }
-  const text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+  const text = new TextDecoder("utf-8").decode(buffer);
   try {
     return asRecord(JSON.parse(text));
   } catch {

@@ -295,6 +295,7 @@ final class PlaceSearchViewModel {
     private(set) var isResolving = false
     private(set) var isLocating = false
     private(set) var errorMessage: String?
+    private(set) var lastError: RouteProviderError?
     private(set) var authorizationStatus: CLAuthorizationStatus
 
     init(
@@ -312,11 +313,21 @@ final class PlaceSearchViewModel {
             guard state.query == trimmed else { return }
             self.suggestions = state.suggestions
             self.isLoading = state.isLoading
+            self.lastError = state.error
             self.errorMessage = state.error?.userMessage
         }
     }
 
     var providerLabel: String { engine.providerLabel }
+
+    var shouldOfferSystemSettings: Bool {
+        switch lastError {
+        case .locationPermissionDenied, .locationUnavailable, .locationAccuracyInsufficient:
+            return true
+        default:
+            return false
+        }
+    }
 
     var permissionExplanation: String {
         locationService.permissionExplanation
@@ -325,17 +336,21 @@ final class PlaceSearchViewModel {
     func updateQuery(_ value: String) {
         query = value
         errorMessage = nil
+        lastError = nil
         engine.update(query: value, near: nil)
     }
 
     func select(_ suggestion: PlaceSuggestion) async -> LocationResult? {
         isResolving = true
         errorMessage = nil
+        lastError = nil
         defer { isResolving = false }
         do {
             return try await engine.resolve(suggestion)
         } catch {
-            errorMessage = RouteProviderError.map(error).userMessage
+            let mapped = RouteProviderError.map(error)
+            lastError = mapped
+            errorMessage = mapped.userMessage
             return nil
         }
     }
@@ -343,6 +358,7 @@ final class PlaceSearchViewModel {
     func useCurrentLocation() async -> LocationResult? {
         isLocating = true
         errorMessage = nil
+        lastError = nil
         defer {
             isLocating = false
             authorizationStatus = locationService.authorizationStatus
@@ -366,10 +382,14 @@ final class PlaceSearchViewModel {
                 source: .currentLocation
             )
         } catch let error as LocationServiceError {
-            errorMessage = error.providerError.userMessage
+            let mapped = error.providerError
+            lastError = mapped
+            errorMessage = mapped.userMessage
             return nil
         } catch {
-            errorMessage = RouteProviderError.map(error).userMessage
+            let mapped = RouteProviderError.map(error)
+            lastError = mapped
+            errorMessage = mapped.userMessage
             return nil
         }
     }

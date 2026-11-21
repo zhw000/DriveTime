@@ -21,7 +21,7 @@ jobs:
   simulator-tests:
     name: Simulator build & XCTest
     runs-on: macos-26
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -50,7 +50,7 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate --spec project.yml
 
-      - name: Discover an installed iPhone simulator
+      - name: Discover and boot an installed iPhone simulator
         id: simulator
         run: |
           set -euo pipefail
@@ -58,24 +58,68 @@ jobs:
           [[ -n "$UDID" ]] || { echo "No simulator UDID discovered" >&2; exit 1; }
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$UDID" 2>/dev/null || true
+          xcrun simctl bootstatus "$UDID" -b
 
-      - name: Build and run XCTest on simulator
+      - name: Build app and test bundles for simulator
         run: |
-          set -euo pipefail
-          rm -rf TestResults.xcresult
+          set -o pipefail
           xcodebuild \
             -project DriveTime.xcodeproj \
             -scheme DriveTime \
+            -configuration Debug \
             -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
-            -resultBundlePath TestResults.xcresult \
-            test 2>&1 | tee test.log
+            -derivedDataPath build-for-testing \
+            build-for-testing 2>&1 | tee build-test.log
+
+      - name: Run XCTest unit tests
+        id: unit_tests
+        continue-on-error: true
+        timeout-minutes: 12
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project DriveTime.xcodeproj \
+            -scheme DriveTime \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath build-for-testing \
+            -only-testing:DriveTimeTests \
+            -parallel-testing-enabled NO \
+            -resultBundlePath UnitResults.xcresult \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 60 \
+            -maximum-test-execution-time-allowance 120 \
+            2>&1 | tee unit-test.log
+
+      - name: Run XCTest UI tests
+        id: ui_tests
+        continue-on-error: true
+        timeout-minutes: 18
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project DriveTime.xcodeproj \
+            -scheme DriveTime \
+            -destination "platform=iOS Simulator,id=${{ steps.simulator.outputs.udid }}" \
+            -derivedDataPath build-for-testing \
+            -only-testing:DriveTimeUITests \
+            -parallel-testing-enabled NO \
+            -resultBundlePath UIResults.xcresult \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 90 \
+            -maximum-test-execution-time-allowance 180 \
+            2>&1 | tee ui-test.log
 
       - name: Summarize XCTest results
         if: always()
         run: |
-          if [ -d TestResults.xcresult ]; then
+          set -euo pipefail
+          if [ -d UnitResults.xcresult ]; then
             xcrun xcresulttool get test-results summary \
-              --path TestResults.xcresult 2>/dev/null | tee test-summary.json || true
+              --path UnitResults.xcresult 2>/dev/null | tee unit-test-summary.json || true
+          fi
+          if [ -d UIResults.xcresult ]; then
+            xcrun xcresulttool get test-results summary \
+              --path UIResults.xcresult 2>/dev/null | tee ui-test-summary.json || true
           fi
 
       - name: Export UI test screenshots
@@ -83,9 +127,9 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ui-test-attachments
-          if [ -d TestResults.xcresult ]; then
+          if [ -d UIResults.xcresult ]; then
             xcrun xcresulttool export attachments \
-              --path TestResults.xcresult \
+              --path UIResults.xcresult \
               --output-path ui-test-attachments || true
           fi
           find ui-test-attachments -maxdepth 2 -type f -print || true
@@ -96,10 +140,28 @@ jobs:
         with:
           name: DriveTime-simulator-tests-${{ github.run_number }}
           path: |
-            TestResults.xcresult
-            test.log
-            test-summary.json
+            UnitResults.xcresult
+            UIResults.xcresult
+            unit-test.log
+            ui-test.log
+            build-test.log
+            unit-test-summary.json
+            ui-test-summary.json
             ui-test-attachments
             DriveTime.xcodeproj
           if-no-files-found: warn
           retention-days: 30
+
+      - name: Enforce test results
+        if: always()
+        run: |
+          echo "Unit tests outcome: ${{ steps.unit_tests.outcome }}"
+          echo "UI tests outcome:   ${{ steps.ui_tests.outcome }}"
+          if [ "${{ steps.unit_tests.outcome }}" != "success" ]; then
+            echo "Unit tests did not pass." >&2
+            exit 1
+          fi
+          if [ "${{ steps.ui_tests.outcome }}" != "success" ]; then
+            echo "UI tests did not pass." >&2
+            exit 1
+          fi

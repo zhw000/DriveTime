@@ -19,14 +19,14 @@ final class DriveTimeUITests: XCTestCase {
             app.staticTexts["DriveTime"].waitForExistence(timeout: 8),
             "DriveTime header should appear"
         )
-        let originField = app.buttons["originField"]
+        let originField = element("originField")
         XCTAssertTrue(originField.waitForExistence(timeout: 5), "Origin field should be tappable")
-        XCTAssertTrue(app.buttons["destinationField"].exists)
+        XCTAssertTrue(element("destinationField").exists)
         addScreenshot(named: "01-home-light")
 
         originField.tap()
         XCTAssertTrue(
-            app.textFields["placeSearchField"].waitForExistence(timeout: 5),
+            element("placeSearchField").waitForExistence(timeout: 5),
             "Tapping the origin field should open place search"
         )
         addScreenshot(named: "02-place-search")
@@ -41,12 +41,12 @@ final class DriveTimeUITests: XCTestCase {
         app.launchArguments += ["-DriveTimeDemo"]
         app.launch()
 
-        let eta = app.staticTexts["etaSummary"]
+        let eta = element("etaSummary")
         XCTAssertTrue(eta.waitForExistence(timeout: 10), "Demo route ETA should render")
         XCTAssertTrue(app.staticTexts["演示数据"].exists, "Demo data must be clearly labelled")
         addScreenshot(named: "03-route-result-compact")
 
-        let expand = app.buttons["expandSheet"]
+        let expand = element("expandSheet")
         XCTAssertTrue(expand.waitForExistence(timeout: 3))
         expand.tap()
 
@@ -57,20 +57,28 @@ final class DriveTimeUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["路线信息"].exists)
         addScreenshot(named: "04-route-result-expanded")
 
-        let refresh = app.buttons["refreshRoute"]
-        XCTAssertTrue(refresh.exists)
+        XCTAssertTrue(element("refreshRoute").exists)
+
+        let alternative = element("routeOption-备选路线 2")
+        XCTAssertTrue(alternative.waitForExistence(timeout: 3), "Second route option should exist")
+        let etaBefore = eta.label
+        alternative.tap()
+        let etaChanged = NSPredicate(format: "label != %@", etaBefore)
+        expectation(for: etaChanged, evaluatedWith: eta, handler: nil)
+        waitForExpectations(timeout: 5)
+        addScreenshot(named: "05-route-alternative-selected")
     }
 
     func testSettingsOpensAndShowsProviderConfiguration() throws {
         app.launch()
 
-        let settings = app.buttons["settingsButton"]
+        let settings = element("settingsButton")
         XCTAssertTrue(settings.waitForExistence(timeout: 8))
         settings.tap()
 
         XCTAssertTrue(app.navigationBars["设置"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.segmentedControls["providerPicker"].exists)
-        XCTAssertTrue(app.textFields["proxyURLField"].exists)
+        XCTAssertTrue(element("providerPicker").exists)
+        XCTAssertTrue(element("proxyURLField").exists)
         addScreenshot(named: "05-settings")
 
         let done = app.buttons["完成"].firstMatch
@@ -86,8 +94,12 @@ final class DriveTimeUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["DriveTime"].waitForExistence(timeout: 8)
         )
-        XCTAssertTrue(app.buttons["originField"].exists)
+        XCTAssertTrue(element("originField").exists)
         addScreenshot(named: "06-home-dark")
+    }
+
+    private func element(_ identifier: String) -> XCUIElement {
+        app.descendants(matching: .any)[identifier]
     }
 
     private func addScreenshot(named name: String) {

@@ -95,7 +95,7 @@ actor URLSessionHTTPClient: HTTPPerforming {
     }
 
     private func shouldRetry(statusCode: Int) -> Bool {
-        [408, 429, 500, 502, 503, 504].contains(statusCode)
+        [408, 500, 502, 503, 504].contains(statusCode)
     }
 
     private func retryDelay(attempt: Int, response: HTTPResponse) -> TimeInterval {
